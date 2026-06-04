@@ -1,0 +1,46 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "useDefineForClassFields": true,
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "moduleResolution": "Bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "strict": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": [
+    "src/main.tsx",
+    "src/App.tsx",
+    "src/vite-env.d.ts",
+    "src/lib/**/*.ts",
+    "src/hooks/**/*.ts",
+    "src/components/**/*.tsx",
+    "src/pages/Index.tsx",
+    "src/pages/layout.tsx",
+    "src/pages/NotFound.tsx",
+    "src/pages/auth/Callback.tsx",
+    "src/pages/admin/**/*.tsx",
+    "src/pages/cart/**/*.tsx",
+    "src/pages/home/**/*.tsx",
+    "src/pages/product/**/*.tsx",
+    "src/pages/products/**/*.tsx",
+    "src/pages/search/**/*.tsx",
+    "src/pages/wishlist/**/*.tsx"
+  ],
+  "exclude": [
+    "src/pages/about",
+    "src/pages/contact",
+    "src/pages/reservation",
+    "src/pages/services",
+    "src/pages/_components"
+  ]
+}

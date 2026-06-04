@@ -1,0 +1,20 @@
+{
+  "name": "Nailsy Magic",
+  "short_name": "Nailsy",
+  "start_url": "/nails.github.io/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#fadbe0",
+  "icons": [
+    {
+      "src": "favicon-512.png",
+      "sizes": "500x500",
+      "type": "image/png"
+    },
+    {
+      "src": "apple-touch-icon.png",
+      "sizes": "500x500",
+      "type": "image/png"
+    }
+  ]
+}
