@@ -9,6 +9,7 @@ import { DELIVERY_FEES, WILAYAS } from "@/lib/products.ts";
 import { formatDzd } from "@/lib/utils.ts";
 import { useCart } from "@/components/providers/cart";
 import { createOrder } from "@/lib/supabase.ts";
+import SafeImage from "@/components/SafeImage.tsx";
 
 export default function CartPage() {
   const { products, total, updateQuantity, removeFromCart, clearCart } = useCart();
@@ -89,7 +90,7 @@ export default function CartPage() {
             <div className="space-y-4">
               {products.map(({ product, quantity }) => (
                 <div key={product.id} className="flex gap-4 rounded-2xl border border-pink-50 p-3">
-                  <img src={product.imageUrl} alt={product.name} className="h-24 w-24 rounded-2xl object-cover" />
+                  <SafeImage src={product.imageUrl} alt={product.name} fallbackLabel={product.reference || product.name} className="h-24 w-24 rounded-2xl object-cover" />
                   <div className="min-w-0 flex-1">
                     <h3 className="truncate text-sm font-bold text-gray-950">{product.name}</h3>
                     <p className="mt-1 text-sm font-bold text-pink-600">{formatDzd(product.price)}</p>

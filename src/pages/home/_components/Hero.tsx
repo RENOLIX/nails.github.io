@@ -2,8 +2,8 @@
 import { Link } from "react-router-dom";
 import { motion } from "motion/react";
 
-const HERO_IMAGE = "/nails.github.io/images/dvok-glace-individual.webp";
-const HERO_MOBILE_IMAGE = "/nails.github.io/images/dvok-glace-mobile.jpeg";
+const HERO_IMAGE = `${import.meta.env.BASE_URL}images/dvok-glace-individual.webp`;
+const HERO_MOBILE_IMAGE = `${import.meta.env.BASE_URL}images/dvok-glace-mobile.jpeg`;
 
 export default function Hero() {
   return (

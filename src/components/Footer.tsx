@@ -1,4 +1,5 @@
 import { Clock3, Instagram, Mail, Music2 } from "lucide-react";
+import SafeImage from "@/components/SafeImage.tsx";
 
 export default function Footer() {
   return (
@@ -14,9 +15,11 @@ export default function Footer() {
         </div>
 
         <div className="order-1 flex flex-col items-center text-center md:order-2">
-          <img
+          <SafeImage
             src="https://hercules-cdn.com/file_kph7rblw10KlLe96KcNfrsHH"
             alt="Nailsy Magic"
+            fallbackLabel="Nailsy Magic"
+            fallbackClassName="bg-transparent p-0 text-2xl font-black text-pink-700 ring-0"
             className="h-20 w-auto object-contain md:h-24"
           />
           <div className="mt-5 hidden items-center justify-center gap-3 md:flex">

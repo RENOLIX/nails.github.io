@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "motion/react";
 import { CATEGORIES } from "@/lib/categories.ts";
+import SafeImage from "@/components/SafeImage.tsx";
 
 export default function CategoryGrid() {
   const navigate = useNavigate();
@@ -37,9 +38,11 @@ export default function CategoryGrid() {
                 className="group w-full overflow-hidden rounded-2xl border border-pink-100 bg-white text-left shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
               >
                 <div className="relative aspect-square overflow-hidden bg-pink-50">
-                  <img
+                  <SafeImage
                     src={category.image}
                     alt={category.label}
+                    fallbackLabel={category.label}
+                    fallbackClassName="rounded-none"
                     className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />

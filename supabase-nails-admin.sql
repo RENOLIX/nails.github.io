@@ -111,7 +111,7 @@ create or replace function public.private_admin_from_token(session_token text)
 returns public.admin_users
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   account public.admin_users;
@@ -122,7 +122,7 @@ begin
     into account
   from public.admin_sessions s
   join public.admin_users u on u.id = s.user_id
-  where s.token_hash = encode(digest(session_token, 'sha256'), 'hex')
+  where s.token_hash = encode(extensions.digest(session_token, 'sha256'), 'hex')
     and s.expires_at > now()
     and u.active = true
   limit 1;
@@ -139,7 +139,7 @@ create or replace function public.admin_login(login_email text, login_password t
 returns jsonb
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   account public.admin_users;
@@ -152,14 +152,14 @@ begin
     and active = true
   limit 1;
 
-  if account.id is null or account.password_hash <> crypt(login_password, account.password_hash) then
+  if account.id is null or account.password_hash <> extensions.crypt(login_password, account.password_hash) then
     raise exception 'Invalid credentials';
   end if;
 
-  raw_token := encode(gen_random_bytes(32), 'hex');
+  raw_token := encode(extensions.gen_random_bytes(32), 'hex');
 
   insert into public.admin_sessions (user_id, token_hash, expires_at)
-  values (account.id, encode(digest(raw_token, 'sha256'), 'hex'), now() + interval '14 days');
+  values (account.id, encode(extensions.digest(raw_token, 'sha256'), 'hex'), now() + interval '14 days');
 
   return jsonb_build_object(
     'token', raw_token,
@@ -179,7 +179,7 @@ create or replace function public.admin_dashboard_data(session_token text)
 returns jsonb
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   account public.admin_users;
@@ -203,7 +203,7 @@ create or replace function public.admin_create_product(session_token text, produ
 returns jsonb
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   account public.admin_users;
@@ -249,7 +249,7 @@ create or replace function public.admin_delete_product(session_token text, produ
 returns jsonb
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   account public.admin_users;
@@ -272,7 +272,7 @@ create or replace function public.admin_create_user(
 returns jsonb
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   account public.admin_users;
@@ -293,7 +293,7 @@ begin
   end if;
 
   insert into public.admin_users (email, name, role, password_hash, active)
-  values (lower(new_email), new_name, new_role, crypt(new_password, gen_salt('bf')), true)
+  values (lower(new_email), new_name, new_role, extensions.crypt(new_password, extensions.gen_salt('bf')), true)
   returning * into inserted;
 
   return to_jsonb(inserted) - 'password_hash';
@@ -304,7 +304,7 @@ create or replace function public.admin_delete_user(session_token text, target_u
 returns jsonb
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   account public.admin_users;
@@ -337,7 +337,7 @@ values (
   'admin@nailsymagic.com',
   'Nailsy Magic Admin',
   'admin',
-  crypt('NailsyMagic2026!', gen_salt('bf')),
+  extensions.crypt('NailsyMagic2026!', extensions.gen_salt('bf')),
   true
 )
 on conflict (email) do update set

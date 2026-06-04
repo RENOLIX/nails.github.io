@@ -3,6 +3,7 @@ import { Heart, Search, ShoppingBag, X } from "lucide-react";
 import { useState } from "react";
 import { Input } from "@/components/ui/input.tsx";
 import { useCart } from "@/components/providers/cart";
+import SafeImage from "@/components/SafeImage.tsx";
 
 function CartBadge() {
   const { count } = useCart();
@@ -57,9 +58,11 @@ export function NavbarPublic() {
 
           <div className="flex w-1/3 justify-center">
             <Link to="/" className="flex items-center gap-2">
-              <img
+              <SafeImage
                 src="https://hercules-cdn.com/file_kph7rblw10KlLe96KcNfrsHH"
                 alt="Nailsy Magic"
+                fallbackLabel="Nailsy Magic"
+                fallbackClassName="bg-transparent p-0 text-pink-700 ring-0"
                 className="h-12 w-auto object-contain md:h-16"
               />
             </Link>

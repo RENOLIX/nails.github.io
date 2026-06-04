@@ -1,4 +1,5 @@
 import { motion } from "motion/react";
+import SafeImage from "@/components/SafeImage.tsx";
 
 export default function AboutBlock() {
   return (
@@ -11,9 +12,11 @@ export default function AboutBlock() {
           viewport={{ once: true }}
           transition={{ duration: 0.6, ease: "easeOut" }}
         >
-          <img
+          <SafeImage
             src="https://hercules-cdn.com/file_T5Qx2VbSBP6ngFTmlPDN5ZK6"
             alt="Nailsy mascot"
+            fallbackLabel="Nailsy Magic"
+            fallbackClassName="bg-pink-50"
             className="w-56 object-contain md:w-72 lg:w-80"
           />
         </motion.div>

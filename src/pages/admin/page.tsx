@@ -21,6 +21,7 @@ import { Input } from "@/components/ui/input.tsx";
 import { Textarea } from "@/components/ui/textarea.tsx";
 import { CATEGORIES } from "@/lib/categories.ts";
 import { formatDzd } from "@/lib/utils.ts";
+import SafeImage from "@/components/SafeImage.tsx";
 import {
   adminCreateProduct,
   adminCreateUser,
@@ -88,17 +89,24 @@ function LoginPanel({ onLogin }: { onLogin: (session: AdminSession) => void }) {
   const [email, setEmail] = useState("admin@nailsymagic.com");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [loginError, setLoginError] = useState("");
 
   const submitLogin = async (event: React.FormEvent) => {
     event.preventDefault();
     setLoading(true);
+    setLoginError("");
     try {
       const session = await adminLogin(email.trim().toLowerCase(), password);
       window.localStorage.setItem(SESSION_KEY, JSON.stringify(session));
       onLogin(session);
       toast.success("Bienvenue dans l'admin Nailsy Magic");
-    } catch {
-      toast.error("Email ou mot de passe incorrect.");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Erreur inconnue";
+      const help = message.includes("function")
+        ? "Le SQL Supabase doit etre recolle avec la derniere version du fichier supabase-nails-admin.sql."
+        : "Verifiez l'email, le mot de passe et que le SQL Supabase a bien ete execute.";
+      setLoginError(`${help} Detail: ${message}`);
+      toast.error("Connexion admin impossible.");
     } finally {
       setLoading(false);
     }
@@ -112,7 +120,7 @@ function LoginPanel({ onLogin }: { onLogin: (session: AdminSession) => void }) {
             <div className="absolute right-8 top-8 rounded-full bg-pink-500 px-4 py-2 text-xs font-black uppercase tracking-[0.2em] text-white">
               Staff only
             </div>
-            <img src={LOGO_URL} alt="Nailsy Magic" className="h-24 w-auto" />
+            <SafeImage src={LOGO_URL} alt="Nailsy Magic" fallbackLabel="Nailsy Magic" fallbackClassName="bg-transparent p-0 text-2xl text-pink-700 ring-0" className="h-24 w-auto" />
             <h1 className="mt-16 max-w-md text-5xl font-black leading-[0.95] text-slate-950">
               Console privée Nailsy Magic.
             </h1>
@@ -131,7 +139,7 @@ function LoginPanel({ onLogin }: { onLogin: (session: AdminSession) => void }) {
 
         <section className="mx-auto w-full max-w-md rounded-[2rem] border border-white/90 bg-white p-6 shadow-[0_30px_110px_-70px_rgba(15,23,42,0.9)] md:p-8">
           <div className="mb-8 text-center">
-            <img src={LOGO_URL} alt="Nailsy Magic" className="mx-auto h-20 w-auto" />
+            <SafeImage src={LOGO_URL} alt="Nailsy Magic" fallbackLabel="Nailsy Magic" fallbackClassName="mx-auto bg-transparent p-0 text-2xl text-pink-700 ring-0" className="mx-auto h-20 w-auto" />
             <div className="mx-auto mt-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-950 text-white">
               <Lock className="h-5 w-5" />
             </div>
@@ -152,6 +160,11 @@ function LoginPanel({ onLogin }: { onLogin: (session: AdminSession) => void }) {
               <ShieldCheck className="h-4 w-4" />
               {loading ? "Connexion..." : "Entrer dans l'admin"}
             </Button>
+            {loginError ? (
+              <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-semibold leading-6 text-red-700">
+                {loginError}
+              </div>
+            ) : null}
           </form>
         </section>
       </div>
@@ -308,7 +321,7 @@ export default function AdminPage() {
         <aside className="lg:sticky lg:top-24 lg:h-[calc(100vh-7rem)] lg:w-72">
           <div className="flex h-full flex-col rounded-[1.75rem] border border-white bg-white p-4 shadow-[0_30px_90px_-70px_rgba(15,23,42,0.85)]">
             <div className="mb-6 flex items-center gap-3 px-2">
-              <img src={LOGO_URL} alt="Nailsy Magic" className="h-14 w-auto" />
+              <SafeImage src={LOGO_URL} alt="Nailsy Magic" fallbackLabel="Nailsy Magic" fallbackClassName="bg-transparent p-0 text-pink-700 ring-0" className="h-14 w-auto" />
             </div>
             <nav className="grid gap-2">
               {nav.map((item) => {
@@ -437,7 +450,7 @@ export default function AdminPage() {
                         <tr key={product.id}>
                           <td className="py-4">
                             <div className="flex items-center gap-3">
-                              <img src={product.image_url || LOGO_URL} alt={product.name} className="h-12 w-12 rounded-2xl object-cover" />
+                              <SafeImage src={product.image_url || LOGO_URL} alt={product.name} fallbackLabel={product.reference || product.name} className="h-12 w-12 rounded-2xl object-cover" />
                               <div>
                                 <p className="font-black text-slate-950">{product.name}</p>
                                 <p className="text-xs text-slate-400">{product.reference || "Sans référence"}</p>

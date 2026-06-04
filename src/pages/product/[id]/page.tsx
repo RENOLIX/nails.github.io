@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button.tsx";
 import { PRODUCTS } from "@/lib/products.ts";
 import { formatDzd } from "@/lib/utils.ts";
 import { useCart } from "@/components/providers/cart";
+import SafeImage from "@/components/SafeImage.tsx";
 
 export default function ProductDetailPage() {
   const { id } = useParams();
@@ -35,9 +36,10 @@ export default function ProductDetailPage() {
       <div className="grid min-w-0 gap-8 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,0.85fr)] lg:gap-10">
         <section className="min-w-0">
           <div className="mx-auto max-w-md overflow-hidden rounded-3xl bg-pink-50 lg:max-w-none">
-            <img
+            <SafeImage
               src={product.images[activeImage]}
               alt={product.name}
+              fallbackLabel={product.name}
               className="aspect-square w-full object-cover"
             />
           </div>
@@ -49,7 +51,7 @@ export default function ProductDetailPage() {
                 onClick={() => setActiveImage(index)}
                 className={`overflow-hidden rounded-2xl border ${activeImage === index ? "border-pink-500" : "border-pink-100"}`}
               >
-                <img src={image} alt="" className="aspect-square h-full w-full object-cover" />
+                <SafeImage src={image} alt={product.name} fallbackLabel={product.reference || product.name} className="aspect-square h-full w-full object-cover" />
               </button>
             ))}
           </div>

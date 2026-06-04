@@ -21,7 +21,14 @@ async function supabaseRequest<T>(path: string, options: RequestOptions = {}) {
 
   if (!response.ok) {
     const message = await response.text();
-    throw new Error(message || `Supabase request failed: ${response.status}`);
+    let readable = message;
+    try {
+      const parsed = JSON.parse(message) as { message?: string; hint?: string; details?: string };
+      readable = [parsed.message, parsed.hint, parsed.details].filter(Boolean).join(" ") || message;
+    } catch {
+      readable = message;
+    }
+    throw new Error(readable || `Supabase request failed: ${response.status}`);
   }
 
   if (response.status === 204) {

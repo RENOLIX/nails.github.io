@@ -3,6 +3,7 @@ import { Heart, Star } from "lucide-react";
 import { motion } from "motion/react";
 import { formatDzd } from "@/lib/utils.ts";
 import type { Product } from "@/lib/products";
+import SafeImage from "@/components/SafeImage.tsx";
 
 type Props = {
   product: Product;
@@ -25,9 +26,10 @@ export default function ProductCard({ product, showBestSeller = false }: Props) 
         )}
 
         <div className="relative aspect-square overflow-hidden bg-pink-50">
-          <img
+          <SafeImage
             src={product.imageUrl}
             alt={product.name}
+            fallbackLabel={product.name}
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
           />
           <Link
