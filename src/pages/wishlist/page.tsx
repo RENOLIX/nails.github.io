@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button.tsx";
 import { Input } from "@/components/ui/input.tsx";
 import { Textarea } from "@/components/ui/textarea.tsx";
+import { createProductRequest, createReview } from "@/lib/supabase.ts";
 
 type Review = {
   name: string;
@@ -25,24 +26,39 @@ export default function WishlistPage() {
   const [requestPhone, setRequestPhone] = useState("");
   const [requestProduct, setRequestProduct] = useState("");
 
-  const submitReview = (event: React.FormEvent) => {
+  const submitReview = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!reviewName.trim() || !reviewMessage.trim()) {
       toast.error("Ajoutez votre nom et votre avis.");
       return;
     }
-    setReviews((current) => [{ name: reviewName.trim(), rating, message: reviewMessage.trim() }, ...current]);
+    const nextReview = { name: reviewName.trim(), rating, message: reviewMessage.trim() };
+    try {
+      await createReview(nextReview);
+    } catch (error) {
+      console.warn("Supabase review save failed", error);
+    }
+    setReviews((current) => [nextReview, ...current]);
     setReviewName("");
     setReviewMessage("");
     setRating(5);
     toast.success("Merci pour votre avis");
   };
 
-  const submitRequest = (event: React.FormEvent) => {
+  const submitRequest = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!requestName.trim() || !requestProduct.trim()) {
       toast.error("Indiquez votre nom et le produit souhaité.");
       return;
+    }
+    try {
+      await createProductRequest({
+        name: requestName.trim(),
+        phone: requestPhone.trim(),
+        product: requestProduct.trim(),
+      });
+    } catch (error) {
+      console.warn("Supabase product request save failed", error);
     }
     const message = `Bonjour Nailsy Magic,%0AJe souhaite demander l'ajout de ce produit:%0A${encodeURIComponent(requestProduct)}%0A%0ANom: ${encodeURIComponent(requestName)}%0ATelephone: ${encodeURIComponent(requestPhone || "-")}`;
     window.open(`https://wa.me/213550000000?text=${message}`, "_blank", "noopener,noreferrer");

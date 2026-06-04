@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea.tsx";
 import { DELIVERY_FEES, WILAYAS } from "@/lib/products.ts";
 import { formatDzd } from "@/lib/utils.ts";
 import { useCart } from "@/components/providers/cart";
+import { createOrder } from "@/lib/supabase.ts";
 
 export default function CartPage() {
   const { products, total, updateQuantity, removeFromCart, clearCart } = useCart();
@@ -21,7 +22,7 @@ export default function CartPage() {
   const shipping = useMemo(() => (wilaya ? DELIVERY_FEES[deliveryMethod] : 0), [deliveryMethod, wilaya]);
   const orderTotal = total + shipping;
 
-  const submitOrder = (event: React.FormEvent) => {
+  const submitOrder = async (event: React.FormEvent) => {
     event.preventDefault();
     if (products.length === 0) {
       toast.error("Votre panier est vide");
@@ -30,6 +31,30 @@ export default function CartPage() {
     if (!name.trim() || !/^0[567]\d{8}$/.test(phone.trim()) || !wilaya || !address.trim()) {
       toast.error("Veuillez remplir vos informations correctement.");
       return;
+    }
+
+    try {
+      await createOrder({
+        customer_name: name.trim(),
+        customer_phone: phone.trim(),
+        wilaya,
+        address: address.trim(),
+        delivery_method: deliveryMethod,
+        note: note.trim(),
+        subtotal: total,
+        shipping,
+        total: orderTotal,
+        items: products.map(({ product, quantity }) => ({
+          id: product.id,
+          name: product.name,
+          reference: product.reference ?? "",
+          price: product.price,
+          quantity,
+          total: product.price * quantity,
+        })),
+      });
+    } catch (error) {
+      console.warn("Supabase order save failed", error);
     }
 
     const lines = products.map(({ product, quantity }) => `- ${product.name} x${quantity}: ${formatDzd(product.price * quantity)}`).join("%0A");

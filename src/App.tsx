@@ -29,6 +29,7 @@ export default function App() {
         <ScrollToTop />
         <Routes>
           <Route path="/auth/callback" element={<AuthCallback />} />
+          <Route path="/admin" element={<AdminPage />} />
           <Route element={<AppLayout />}>
             <Route path="/" element={<Index />} />
             <Route path="/products" element={<ProductsPage />} />
@@ -38,7 +39,6 @@ export default function App() {
             <Route path="/cart" element={<CartPage />} />
             <Route path="/wishlist" element={<WishlistPage />} />
             <Route path="/search" element={<SearchPage />} />
-            <Route path="/admin" element={<AdminPage />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
