@@ -29,7 +29,7 @@ export function NavbarPublic() {
   };
 
   return (
-    <header className="sticky top-0 z-50 border-b border-pink-100 bg-[#fadbe0]/95 shadow-sm backdrop-blur">
+    <header className="fixed left-0 right-0 top-0 z-[100] w-full border-b border-pink-100 bg-[#fadbe0] shadow-sm">
       <div className="mx-auto max-w-7xl px-4">
         <div className="flex h-16 items-center justify-between md:h-20">
           <div className="flex w-1/3 items-center gap-1">
