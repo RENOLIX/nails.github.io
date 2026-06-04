@@ -232,13 +232,9 @@ export async function loadAdminDashboard(token: string) {
   if (isLocalToken(token)) {
     return Promise.resolve(readLocalDashboard());
   }
-  const data = await rpc<AdminDashboardData>("admin_dashboard_data", {
+  return rpc<AdminDashboardData>("admin_dashboard_data", {
     session_token: token,
   });
-  if (data.products.length === 0) {
-    data.products = localProducts();
-  }
-  return data;
 }
 
 export function adminCreateProduct(token: string, product: ProductInput) {
