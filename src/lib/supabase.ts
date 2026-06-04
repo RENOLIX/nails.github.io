@@ -1,4 +1,4 @@
-import { PRODUCTS } from "@/lib/products.ts";
+import { PRODUCTS, type Product } from "@/lib/products.ts";
 
 const SUPABASE_REST_URL = "https://ecjvcilxbwpnliibgybv.supabase.co/rest/v1";
 const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_TTKdey8dP35cIr-NsiYTZg_VJM9httB";
@@ -140,21 +140,25 @@ export type ProductInput = {
   is_new?: boolean;
 };
 
-const localAdminUser: AdminUser = {
-  id: "local-admin",
-  email: LOCAL_ADMIN_EMAIL,
-  name: "Nailsy Magic Admin",
-  role: "admin",
-  active: true,
-  created_at: new Date().toISOString(),
-};
-
-function isLocalToken(token: string) {
-  return token === LOCAL_ADMIN_TOKEN;
+function adminProductToProduct(product: AdminProduct): Product {
+  return {
+    id: product.id,
+    name: product.name,
+    reference: product.reference ?? undefined,
+    description: product.description ?? "",
+    category: product.category,
+    subcategory: product.subcategory ?? "",
+    price: Number(product.price),
+    oldPrice: product.old_price ? Number(product.old_price) : undefined,
+    imageUrl: product.image_url ?? "",
+    images: product.images?.length ? product.images : product.image_url ? [product.image_url] : [],
+    isBestSeller: product.is_best_seller,
+    isNew: product.is_new,
+  };
 }
 
-function localProducts(): AdminProduct[] {
-  return PRODUCTS.map((product) => ({
+function productToAdminProduct(product: Product): AdminProduct {
+  return {
     id: product.id,
     name: product.name,
     reference: product.reference ?? null,
@@ -169,7 +173,28 @@ function localProducts(): AdminProduct[] {
     is_new: Boolean(product.isNew),
     active: true,
     created_at: new Date().toISOString(),
-  }));
+  };
+}
+
+export function adminProductsToProducts(products: AdminProduct[]) {
+  return products.map(adminProductToProduct);
+}
+
+const localAdminUser: AdminUser = {
+  id: "local-admin",
+  email: LOCAL_ADMIN_EMAIL,
+  name: "Nailsy Magic Admin",
+  role: "admin",
+  active: true,
+  created_at: new Date().toISOString(),
+};
+
+function isLocalToken(token: string) {
+  return token === LOCAL_ADMIN_TOKEN;
+}
+
+function localProducts(): AdminProduct[] {
+  return PRODUCTS.map(productToAdminProduct);
 }
 
 function readLocalDashboard(): AdminDashboardData {
@@ -203,13 +228,17 @@ export async function adminLogin(email: string, password: string) {
   }
 }
 
-export function loadAdminDashboard(token: string) {
+export async function loadAdminDashboard(token: string) {
   if (isLocalToken(token)) {
     return Promise.resolve(readLocalDashboard());
   }
-  return rpc<AdminDashboardData>("admin_dashboard_data", {
+  const data = await rpc<AdminDashboardData>("admin_dashboard_data", {
     session_token: token,
   });
+  if (data.products.length === 0) {
+    data.products = localProducts();
+  }
+  return data;
 }
 
 export function adminCreateProduct(token: string, product: ProductInput) {
@@ -324,4 +353,15 @@ export function createProductRequest(request: { name: string; phone: string; pro
     headers: { Prefer: "return=representation" },
     body: { ...request, status: "new" },
   });
+}
+
+export async function listPublicProducts() {
+  const rows = await supabaseRequest<AdminProduct[]>(
+    "products?select=*&active=eq.true&order=created_at.desc",
+    {
+      method: "GET",
+    },
+  );
+
+  return rows.length > 0 ? adminProductsToProducts(rows) : PRODUCTS;
 }

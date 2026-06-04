@@ -37,7 +37,7 @@ import {
 
 const SESSION_KEY = "nails-admin-session";
 
-type AdminTab = "overview" | "products" | "orders" | "reviews" | "users";
+type AdminTab = "overview" | "products" | "add-product" | "orders" | "reviews" | "users";
 
 const emptyDashboard: AdminDashboardData = {
   products: [],
@@ -253,10 +253,25 @@ export default function AdminPage() {
       });
       toast.success("Produit ajouté");
       setProductForm((current) => ({ ...current, name: "", reference: "", price: "", old_price: "", image_url: "", description: "" }));
+      setTab("products");
       await refresh();
     } catch {
       toast.error("Impossible d'ajouter le produit.");
     }
+  };
+
+  const handleProductImage = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Choisissez une image.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setProductForm((current) => ({ ...current, image_url: String(reader.result || "") }));
+    };
+    reader.readAsDataURL(file);
   };
 
   const removeProduct = async (productId: string) => {
@@ -403,37 +418,16 @@ export default function AdminPage() {
           )}
 
           {tab === "products" && (
-            <section className="grid gap-5 xl:grid-cols-[0.82fr_1.18fr]">
-              <Panel title="Ajouter un produit" icon={Plus}>
-                <form className="space-y-4" onSubmit={submitProduct}>
-                  <Input value={productForm.name} onChange={(event) => setProductForm({ ...productForm, name: event.target.value })} placeholder="Nom du produit" />
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <Input value={productForm.reference} onChange={(event) => setProductForm({ ...productForm, reference: event.target.value })} placeholder="Référence" />
-                    <Input value={productForm.price} onChange={(event) => setProductForm({ ...productForm, price: event.target.value })} inputMode="numeric" placeholder="Prix DA" />
-                  </div>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <select value={productForm.category} onChange={(event) => setProductForm({ ...productForm, category: event.target.value })} className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm">
-                      {CATEGORIES.map((category) => <option key={category.id} value={category.id}>{category.label}</option>)}
-                    </select>
-                    <Input value={productForm.subcategory} onChange={(event) => setProductForm({ ...productForm, subcategory: event.target.value })} placeholder="Sous-catégorie" />
-                  </div>
-                  <Input value={productForm.old_price} onChange={(event) => setProductForm({ ...productForm, old_price: event.target.value })} inputMode="numeric" placeholder="Ancien prix optionnel" />
-                  <Input value={productForm.image_url} onChange={(event) => setProductForm({ ...productForm, image_url: event.target.value })} placeholder="URL image" />
-                  <Textarea value={productForm.description} onChange={(event) => setProductForm({ ...productForm, description: event.target.value })} placeholder="Description produit" />
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 px-3 py-3 text-sm font-bold">
-                      <input type="checkbox" checked={productForm.is_new} onChange={(event) => setProductForm({ ...productForm, is_new: event.target.checked })} />
-                      Nouveau
-                    </label>
-                    <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 px-3 py-3 text-sm font-bold">
-                      <input type="checkbox" checked={productForm.is_best_seller} onChange={(event) => setProductForm({ ...productForm, is_best_seller: event.target.checked })} />
-                      Best seller
-                    </label>
-                  </div>
-                  <Button type="submit" className="h-11 w-full rounded-xl bg-pink-600 hover:bg-pink-700">Ajouter</Button>
-                </form>
-              </Panel>
-              <Panel title="Catalogue Supabase" icon={Package}>
+            <Panel title="Catalogue produit" icon={Package}>
+              <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-sm font-semibold text-slate-500">
+                  {dashboard.products.length} produits synchronisés avec le site.
+                </p>
+                <Button onClick={() => setTab("add-product")} className="h-11 rounded-xl bg-pink-600 px-5 hover:bg-pink-700">
+                  <Plus className="h-4 w-4" />
+                  Ajouter un produit
+                </Button>
+              </div>
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[760px] text-left text-sm">
                     <thead className="text-xs uppercase tracking-[0.16em] text-slate-400">
@@ -475,10 +469,69 @@ export default function AdminPage() {
                       ))}
                     </tbody>
                   </table>
-                  {dashboard.products.length === 0 && <p className="py-12 text-center text-sm text-slate-400">Aucun produit Supabase pour l'instant.</p>}
+                  {dashboard.products.length === 0 && <p className="py-12 text-center text-sm text-slate-400">Aucun produit pour l'instant.</p>}
                 </div>
-              </Panel>
-            </section>
+            </Panel>
+          )}
+
+          {tab === "add-product" && (
+            <Panel title="Ajouter un produit" icon={Plus}>
+              <form className="grid gap-6 xl:grid-cols-[0.8fr_1.2fr]" onSubmit={submitProduct}>
+                <div className="space-y-4">
+                  <label className="flex min-h-[360px] cursor-pointer flex-col items-center justify-center overflow-hidden rounded-[1.5rem] border-2 border-dashed border-pink-200 bg-pink-50/70 p-4 text-center transition hover:border-pink-400 hover:bg-pink-50">
+                    {productForm.image_url ? (
+                      <SafeImage src={productForm.image_url} alt="Aperçu produit" fallbackLabel="Aperçu" className="h-full max-h-[420px] w-full rounded-2xl object-cover" />
+                    ) : (
+                      <div>
+                        <PackagePlus className="mx-auto h-10 w-10 text-pink-400" />
+                        <p className="mt-4 text-lg font-black text-slate-950">Téléverser l'image</p>
+                        <p className="mt-2 text-sm font-semibold text-slate-500">Depuis PC ou téléphone</p>
+                      </div>
+                    )}
+                    <input type="file" accept="image/*" className="sr-only" onChange={handleProductImage} />
+                  </label>
+                  {productForm.image_url ? (
+                    <Button type="button" variant="outline" onClick={() => setProductForm({ ...productForm, image_url: "" })} className="h-11 w-full rounded-xl">
+                      Changer l'image
+                    </Button>
+                  ) : null}
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <Button type="button" variant="outline" onClick={() => setTab("products")} className="rounded-xl">
+                      Retour catalogue
+                    </Button>
+                    <Button type="submit" className="h-11 rounded-xl bg-pink-600 px-6 hover:bg-pink-700">
+                      Enregistrer le produit
+                    </Button>
+                  </div>
+                  <Input value={productForm.name} onChange={(event) => setProductForm({ ...productForm, name: event.target.value })} placeholder="Nom du produit" />
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <Input value={productForm.reference} onChange={(event) => setProductForm({ ...productForm, reference: event.target.value })} placeholder="Référence" />
+                    <Input value={productForm.price} onChange={(event) => setProductForm({ ...productForm, price: event.target.value })} inputMode="numeric" placeholder="Prix DA" />
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <select value={productForm.category} onChange={(event) => setProductForm({ ...productForm, category: event.target.value })} className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm">
+                      {CATEGORIES.map((category) => <option key={category.id} value={category.id}>{category.label}</option>)}
+                    </select>
+                    <Input value={productForm.subcategory} onChange={(event) => setProductForm({ ...productForm, subcategory: event.target.value })} placeholder="Sous-catégorie" />
+                  </div>
+                  <Input value={productForm.old_price} onChange={(event) => setProductForm({ ...productForm, old_price: event.target.value })} inputMode="numeric" placeholder="Ancien prix optionnel" />
+                  <Textarea value={productForm.description} onChange={(event) => setProductForm({ ...productForm, description: event.target.value })} placeholder="Description produit" />
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 px-3 py-3 text-sm font-bold">
+                      <input type="checkbox" checked={productForm.is_new} onChange={(event) => setProductForm({ ...productForm, is_new: event.target.checked })} />
+                      Nouveau
+                    </label>
+                    <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 px-3 py-3 text-sm font-bold">
+                      <input type="checkbox" checked={productForm.is_best_seller} onChange={(event) => setProductForm({ ...productForm, is_best_seller: event.target.checked })} />
+                      Best seller
+                    </label>
+                  </div>
+                </div>
+              </form>
+            </Panel>
           )}
 
           {tab === "orders" && (

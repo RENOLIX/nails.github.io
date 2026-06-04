@@ -1,5 +1,6 @@
 import { createContext, type PropsWithChildren, useContext, useEffect, useMemo, useState } from "react";
-import { PRODUCTS, type Product } from "@/lib/products";
+import type { Product } from "@/lib/products";
+import { useProducts } from "./products";
 
 export type CartLine = {
   productId: string;
@@ -29,6 +30,7 @@ function readCart() {
 }
 
 export function CartProvider({ children }: PropsWithChildren) {
+  const { products: catalog } = useProducts();
   const [lines, setLines] = useState<CartLine[]>(() => (typeof window === "undefined" ? [] : readCart()));
 
   useEffect(() => {
@@ -39,11 +41,11 @@ export function CartProvider({ children }: PropsWithChildren) {
     () =>
       lines
         .map((line) => {
-          const product = PRODUCTS.find((entry) => entry.id === line.productId);
+          const product = catalog.find((entry) => entry.id === line.productId);
           return product ? { product, quantity: line.quantity } : null;
         })
         .filter(Boolean) as Array<{ product: Product; quantity: number }>,
-    [lines],
+    [lines, catalog],
   );
 
   const value = useMemo<CartContextValue>(

@@ -1,14 +1,15 @@
 import { useSearchParams } from "react-router-dom";
 import { Search } from "lucide-react";
 import ProductCard from "@/components/ProductCard.tsx";
-import { PRODUCTS } from "@/lib/products.ts";
+import { useProducts } from "@/components/providers/products.tsx";
 
 export default function SearchPage() {
   const [params] = useSearchParams();
   const q = params.get("q") ?? "";
   const search = q.toLowerCase();
+  const { products: catalog } = useProducts();
 
-  const results = PRODUCTS.filter((product) =>
+  const results = catalog.filter((product) =>
     product.name.toLowerCase().includes(search) ||
     product.description.toLowerCase().includes(search) ||
     (product.reference ?? "").toLowerCase().includes(search) ||

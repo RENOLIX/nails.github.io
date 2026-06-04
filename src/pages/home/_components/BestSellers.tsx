@@ -1,10 +1,11 @@
 import { motion } from "motion/react";
 import { Star } from "lucide-react";
 import ProductCard from "@/components/ProductCard.tsx";
-import { PRODUCTS } from "@/lib/products.ts";
+import { useProducts } from "@/components/providers/products.tsx";
 
 export default function BestSellers() {
-  const products = PRODUCTS.filter((product) => product.isBestSeller).slice(0, 5);
+  const { products: catalog } = useProducts();
+  const products = catalog.filter((product) => product.isBestSeller).slice(0, 5);
 
   return (
     <section className="mx-auto max-w-7xl px-4 py-10" id="bestsellers">

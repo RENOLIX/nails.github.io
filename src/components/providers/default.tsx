@@ -5,6 +5,7 @@ import { QueryClientProvider } from "./query-client";
 import { ThemeProvider } from "./theme";
 import { Toaster } from "sonner";
 import { CartProvider } from "./cart";
+import { ProductsProvider } from "./products";
 
 export function DefaultProviders({ children }: PropsWithChildren) {
   return (
@@ -12,7 +13,9 @@ export function DefaultProviders({ children }: PropsWithChildren) {
       <QueryClientProvider>
         <ConvexProvider>
           <AuthProvider>
-            <CartProvider>{children}</CartProvider>
+            <ProductsProvider>
+              <CartProvider>{children}</CartProvider>
+            </ProductsProvider>
             <Toaster richColors position="top-center" />
           </AuthProvider>
         </ConvexProvider>

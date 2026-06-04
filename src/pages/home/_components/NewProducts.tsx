@@ -1,9 +1,10 @@
 import { motion } from "motion/react";
 import ProductCard from "@/components/ProductCard.tsx";
-import { PRODUCTS } from "@/lib/products.ts";
+import { useProducts } from "@/components/providers/products.tsx";
 
 export default function NewProducts() {
-  const products = PRODUCTS.filter((product) => product.isNew).slice(0, 5);
+  const { products: catalog } = useProducts();
+  const products = catalog.filter((product) => product.isNew).slice(0, 5);
 
   return (
     <section className="mx-auto max-w-7xl px-4 py-10" id="new">

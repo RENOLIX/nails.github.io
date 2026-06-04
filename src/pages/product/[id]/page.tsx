@@ -3,14 +3,15 @@ import { CheckCircle2, Heart, Minus, Plus, ShieldCheck, ShoppingBag, Truck } fro
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button.tsx";
-import { PRODUCTS } from "@/lib/products.ts";
 import { formatDzd } from "@/lib/utils.ts";
 import { useCart } from "@/components/providers/cart";
 import SafeImage from "@/components/SafeImage.tsx";
+import { useProducts } from "@/components/providers/products.tsx";
 
 export default function ProductDetailPage() {
   const { id } = useParams();
-  const product = useMemo(() => PRODUCTS.find((entry) => entry.id === id), [id]);
+  const { products } = useProducts();
+  const product = useMemo(() => products.find((entry) => entry.id === id), [id, products]);
   const [activeImage, setActiveImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const { addToCart } = useCart();

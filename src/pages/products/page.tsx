@@ -3,14 +3,16 @@ import { ChevronRight, Filter } from "lucide-react";
 import ProductCard from "@/components/ProductCard.tsx";
 import { CATEGORIES } from "@/lib/categories.ts";
 import { COLOR_REFS } from "@/lib/colorRefs.ts";
-import { findCategoryLabel, PRODUCTS } from "@/lib/products.ts";
+import { findCategoryLabel } from "@/lib/products.ts";
+import { useProducts } from "@/components/providers/products.tsx";
 
 export default function ProductsPage() {
   const { category, subcategory } = useParams();
+  const { products: catalog } = useProducts();
   const currentCategory = CATEGORIES.find((entry) => entry.id === category);
   const currentSubcategory = currentCategory?.subcategories.find((entry) => entry.id === subcategory);
 
-  const products = PRODUCTS.filter((product) => {
+  const products = catalog.filter((product) => {
     if (category && product.category !== category) return false;
     if (subcategory && product.subcategory !== subcategory) return false;
     return true;
