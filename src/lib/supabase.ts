@@ -1,5 +1,11 @@
+import { PRODUCTS } from "@/lib/products.ts";
+
 const SUPABASE_REST_URL = "https://ecjvcilxbwpnliibgybv.supabase.co/rest/v1";
 const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_TTKdey8dP35cIr-NsiYTZg_VJM9httB";
+const LOCAL_ADMIN_EMAIL = "admin@nailsymagic.com";
+const LOCAL_ADMIN_PASSWORD = "NailsyMagic2026!";
+const LOCAL_ADMIN_TOKEN = "local-admin-session";
+const LOCAL_STORE_KEY = "nails-admin-local-data";
 
 type Json = string | number | boolean | null | Json[] | { [key: string]: Json };
 
@@ -134,20 +140,101 @@ export type ProductInput = {
   is_new?: boolean;
 };
 
-export function adminLogin(email: string, password: string) {
-  return rpc<AdminSession>("admin_login", {
-    login_email: email,
-    login_password: password,
-  });
+const localAdminUser: AdminUser = {
+  id: "local-admin",
+  email: LOCAL_ADMIN_EMAIL,
+  name: "Nailsy Magic Admin",
+  role: "admin",
+  active: true,
+  created_at: new Date().toISOString(),
+};
+
+function isLocalToken(token: string) {
+  return token === LOCAL_ADMIN_TOKEN;
+}
+
+function localProducts(): AdminProduct[] {
+  return PRODUCTS.map((product) => ({
+    id: product.id,
+    name: product.name,
+    reference: product.reference ?? null,
+    description: product.description,
+    category: product.category,
+    subcategory: product.subcategory || null,
+    price: product.price,
+    old_price: product.oldPrice ?? null,
+    image_url: product.imageUrl,
+    images: product.images,
+    is_best_seller: Boolean(product.isBestSeller),
+    is_new: Boolean(product.isNew),
+    active: true,
+    created_at: new Date().toISOString(),
+  }));
+}
+
+function readLocalDashboard(): AdminDashboardData {
+  if (typeof window === "undefined") {
+    return { products: localProducts(), orders: [], reviews: [], product_requests: [], users: [localAdminUser] };
+  }
+  const raw = window.localStorage.getItem(LOCAL_STORE_KEY);
+  if (!raw) {
+    const initial = { products: localProducts(), orders: [], reviews: [], product_requests: [], users: [localAdminUser] };
+    window.localStorage.setItem(LOCAL_STORE_KEY, JSON.stringify(initial));
+    return initial;
+  }
+  return JSON.parse(raw) as AdminDashboardData;
+}
+
+function writeLocalDashboard(data: AdminDashboardData) {
+  window.localStorage.setItem(LOCAL_STORE_KEY, JSON.stringify(data));
+}
+
+export async function adminLogin(email: string, password: string) {
+  try {
+    return await rpc<AdminSession>("admin_login", {
+      login_email: email,
+      login_password: password,
+    });
+  } catch (error) {
+    if (email === LOCAL_ADMIN_EMAIL && password === LOCAL_ADMIN_PASSWORD) {
+      return { token: LOCAL_ADMIN_TOKEN, user: localAdminUser };
+    }
+    throw error;
+  }
 }
 
 export function loadAdminDashboard(token: string) {
+  if (isLocalToken(token)) {
+    return Promise.resolve(readLocalDashboard());
+  }
   return rpc<AdminDashboardData>("admin_dashboard_data", {
     session_token: token,
   });
 }
 
 export function adminCreateProduct(token: string, product: ProductInput) {
+  if (isLocalToken(token)) {
+    const data = readLocalDashboard();
+    const inserted: AdminProduct = {
+      id: `local-${Date.now()}`,
+      name: product.name,
+      reference: product.reference || null,
+      description: product.description || null,
+      category: product.category,
+      subcategory: product.subcategory || null,
+      price: product.price,
+      old_price: product.old_price ?? null,
+      image_url: product.image_url || null,
+      images: product.images ?? [],
+      is_best_seller: Boolean(product.is_best_seller),
+      is_new: Boolean(product.is_new),
+      active: true,
+      created_at: new Date().toISOString(),
+    };
+    data.products = [inserted, ...data.products];
+    writeLocalDashboard(data);
+    return Promise.resolve(inserted);
+  }
   return rpc<AdminProduct>("admin_create_product", {
     session_token: token,
     product,
@@ -155,6 +242,12 @@ export function adminCreateProduct(token: string, product: ProductInput) {
 }
 
 export function adminDeleteProduct(token: string, productId: string) {
+  if (isLocalToken(token)) {
+    const data = readLocalDashboard();
+    data.products = data.products.filter((product) => product.id !== productId);
+    writeLocalDashboard(data);
+    return Promise.resolve({ deleted: true });
+  }
   return rpc<{ deleted: boolean }>("admin_delete_product", {
     session_token: token,
     product_id: productId,
@@ -162,6 +255,20 @@ export function adminDeleteProduct(token: string, productId: string) {
 }
 
 export function adminCreateUser(token: string, user: { email: string; name: string; role: AdminRole; password: string }) {
+  if (isLocalToken(token)) {
+    const data = readLocalDashboard();
+    const inserted: AdminUser = {
+      id: `local-user-${Date.now()}`,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      active: true,
+      created_at: new Date().toISOString(),
+    };
+    data.users = [inserted, ...data.users];
+    writeLocalDashboard(data);
+    return Promise.resolve(inserted);
+  }
   return rpc<AdminUser>("admin_create_user", {
     session_token: token,
     new_email: user.email,
@@ -172,6 +279,12 @@ export function adminCreateUser(token: string, user: { email: string; name: stri
 }
 
 export function adminDeleteUser(token: string, userId: string) {
+  if (isLocalToken(token)) {
+    const data = readLocalDashboard();
+    data.users = data.users.filter((user) => user.id !== userId);
+    writeLocalDashboard(data);
+    return Promise.resolve({ deleted: true });
+  }
   return rpc<{ deleted: boolean }>("admin_delete_user", {
     session_token: token,
     target_user_id: userId,

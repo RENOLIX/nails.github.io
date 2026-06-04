@@ -22,6 +22,7 @@ import { Textarea } from "@/components/ui/textarea.tsx";
 import { CATEGORIES } from "@/lib/categories.ts";
 import { formatDzd } from "@/lib/utils.ts";
 import SafeImage from "@/components/SafeImage.tsx";
+import { NAILSY_LOGO } from "@/lib/assets.ts";
 import {
   adminCreateProduct,
   adminCreateUser,
@@ -34,7 +35,6 @@ import {
   type AdminSession,
 } from "@/lib/supabase.ts";
 
-const LOGO_URL = "https://hercules-cdn.com/file_kph7rblw10KlLe96KcNfrsHH";
 const SESSION_KEY = "nails-admin-session";
 
 type AdminTab = "overview" | "products" | "orders" | "reviews" | "users";
@@ -120,7 +120,7 @@ function LoginPanel({ onLogin }: { onLogin: (session: AdminSession) => void }) {
             <div className="absolute right-8 top-8 rounded-full bg-pink-500 px-4 py-2 text-xs font-black uppercase tracking-[0.2em] text-white">
               Staff only
             </div>
-            <SafeImage src={LOGO_URL} alt="Nailsy Magic" fallbackLabel="Nailsy Magic" fallbackClassName="bg-transparent p-0 text-2xl text-pink-700 ring-0" className="h-24 w-auto" />
+            <SafeImage src={NAILSY_LOGO} alt="Nailsy Magic" fallbackLabel="Nailsy Magic" fallbackClassName="bg-transparent p-0 text-2xl text-pink-700 ring-0" className="h-24 w-auto" />
             <h1 className="mt-16 max-w-md text-5xl font-black leading-[0.95] text-slate-950">
               Console privée Nailsy Magic.
             </h1>
@@ -139,7 +139,7 @@ function LoginPanel({ onLogin }: { onLogin: (session: AdminSession) => void }) {
 
         <section className="mx-auto w-full max-w-md rounded-[2rem] border border-white/90 bg-white p-6 shadow-[0_30px_110px_-70px_rgba(15,23,42,0.9)] md:p-8">
           <div className="mb-8 text-center">
-            <SafeImage src={LOGO_URL} alt="Nailsy Magic" fallbackLabel="Nailsy Magic" fallbackClassName="mx-auto bg-transparent p-0 text-2xl text-pink-700 ring-0" className="mx-auto h-20 w-auto" />
+            <SafeImage src={NAILSY_LOGO} alt="Nailsy Magic" fallbackLabel="Nailsy Magic" fallbackClassName="mx-auto bg-transparent p-0 text-2xl text-pink-700 ring-0" className="mx-auto h-20 w-auto" />
             <div className="mx-auto mt-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-950 text-white">
               <Lock className="h-5 w-5" />
             </div>
@@ -156,7 +156,7 @@ function LoginPanel({ onLogin }: { onLogin: (session: AdminSession) => void }) {
               <label className="mb-2 block text-xs font-black uppercase tracking-[0.18em] text-slate-500">Mot de passe</label>
               <Input value={password} onChange={(event) => setPassword(event.target.value)} type="password" className="h-12 rounded-2xl" />
             </div>
-            <Button disabled={loading} className="h-12 w-full rounded-2xl bg-slate-950 text-white hover:bg-slate-800">
+            <Button type="submit" disabled={loading} className="h-12 w-full rounded-2xl bg-slate-950 text-white hover:bg-slate-800">
               <ShieldCheck className="h-4 w-4" />
               {loading ? "Connexion..." : "Entrer dans l'admin"}
             </Button>
@@ -321,7 +321,7 @@ export default function AdminPage() {
         <aside className="lg:sticky lg:top-24 lg:h-[calc(100vh-7rem)] lg:w-72">
           <div className="flex h-full flex-col rounded-[1.75rem] border border-white bg-white p-4 shadow-[0_30px_90px_-70px_rgba(15,23,42,0.85)]">
             <div className="mb-6 flex items-center gap-3 px-2">
-              <SafeImage src={LOGO_URL} alt="Nailsy Magic" fallbackLabel="Nailsy Magic" fallbackClassName="bg-transparent p-0 text-pink-700 ring-0" className="h-14 w-auto" />
+              <SafeImage src={NAILSY_LOGO} alt="Nailsy Magic" fallbackLabel="Nailsy Magic" fallbackClassName="bg-transparent p-0 text-pink-700 ring-0" className="h-14 w-auto" />
             </div>
             <nav className="grid gap-2">
               {nav.map((item) => {
@@ -430,7 +430,7 @@ export default function AdminPage() {
                       Best seller
                     </label>
                   </div>
-                  <Button className="h-11 w-full rounded-xl bg-pink-600 hover:bg-pink-700">Ajouter</Button>
+                  <Button type="submit" className="h-11 w-full rounded-xl bg-pink-600 hover:bg-pink-700">Ajouter</Button>
                 </form>
               </Panel>
               <Panel title="Catalogue Supabase" icon={Package}>
@@ -450,7 +450,7 @@ export default function AdminPage() {
                         <tr key={product.id}>
                           <td className="py-4">
                             <div className="flex items-center gap-3">
-                              <SafeImage src={product.image_url || LOGO_URL} alt={product.name} fallbackLabel={product.reference || product.name} className="h-12 w-12 rounded-2xl object-cover" />
+                              <SafeImage src={product.image_url || NAILSY_LOGO} alt={product.name} fallbackLabel={product.reference || product.name} className="h-12 w-12 rounded-2xl object-cover" />
                               <div>
                                 <p className="font-black text-slate-950">{product.name}</p>
                                 <p className="text-xs text-slate-400">{product.reference || "Sans référence"}</p>
@@ -538,7 +538,7 @@ export default function AdminPage() {
                       <option value="admin">Admin</option>
                     </select>
                     <Input value={userForm.password} onChange={(event) => setUserForm({ ...userForm, password: event.target.value })} type="password" placeholder="Mot de passe" />
-                    <Button className="h-11 w-full rounded-xl bg-slate-950 text-white hover:bg-slate-800">Créer l'utilisateur</Button>
+                    <Button type="submit" className="h-11 w-full rounded-xl bg-slate-950 text-white hover:bg-slate-800">Créer l'utilisateur</Button>
                   </form>
                 )}
               </Panel>

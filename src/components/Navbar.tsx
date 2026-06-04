@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input.tsx";
 import { useCart } from "@/components/providers/cart";
 import SafeImage from "@/components/SafeImage.tsx";
+import { NAILSY_LOGO } from "@/lib/assets.ts";
 
 function CartBadge() {
   const { count } = useCart();
@@ -59,7 +60,7 @@ export function NavbarPublic() {
           <div className="flex w-1/3 justify-center">
             <Link to="/" className="flex items-center gap-2">
               <SafeImage
-                src="https://hercules-cdn.com/file_kph7rblw10KlLe96KcNfrsHH"
+                src={NAILSY_LOGO}
                 alt="Nailsy Magic"
                 fallbackLabel="Nailsy Magic"
                 fallbackClassName="bg-transparent p-0 text-pink-700 ring-0"

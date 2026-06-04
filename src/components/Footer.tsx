@@ -1,5 +1,6 @@
 import { Clock3, Instagram, Mail, Music2 } from "lucide-react";
 import SafeImage from "@/components/SafeImage.tsx";
+import { NAILSY_LOGO } from "@/lib/assets.ts";
 
 export default function Footer() {
   return (
@@ -16,7 +17,7 @@ export default function Footer() {
 
         <div className="order-1 flex flex-col items-center text-center md:order-2">
           <SafeImage
-            src="https://hercules-cdn.com/file_kph7rblw10KlLe96KcNfrsHH"
+            src={NAILSY_LOGO}
             alt="Nailsy Magic"
             fallbackLabel="Nailsy Magic"
             fallbackClassName="bg-transparent p-0 text-2xl font-black text-pink-700 ring-0"

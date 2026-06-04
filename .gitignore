@@ -3,6 +3,7 @@ dist
 public/images/*
 !public/images/dvok-glace-individual.webp
 !public/images/dvok-glace-mobile.jpeg
+!public/images/nailsy-logo.png
 .DS_Store
 .env
 .env.local
