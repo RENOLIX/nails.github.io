@@ -7,6 +7,7 @@ import {
   MessageSquareText,
   Package,
   PackagePlus,
+  Pencil,
   Plus,
   ShieldCheck,
   Sparkles,
@@ -29,7 +30,9 @@ import {
   adminDeleteProduct,
   adminDeleteUser,
   adminLogin,
+  adminUpdateProduct,
   loadAdminDashboard,
+  type AdminProduct,
   type AdminDashboardData,
   type AdminRole,
   type AdminSession,
@@ -177,6 +180,7 @@ export default function AdminPage() {
   const [tab, setTab] = useState<AdminTab>("overview");
   const [dashboard, setDashboard] = useState<AdminDashboardData>(emptyDashboard);
   const [loading, setLoading] = useState(false);
+  const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [productForm, setProductForm] = useState({
     name: "",
     reference: "",
@@ -230,6 +234,39 @@ export default function AdminPage() {
     setDashboard(emptyDashboard);
   };
 
+  const resetProductForm = () => {
+    setEditingProductId(null);
+    setProductForm({
+      name: "",
+      reference: "",
+      category: "vernis",
+      subcategory: "",
+      price: "",
+      old_price: "",
+      image_url: "",
+      description: "",
+      is_best_seller: false,
+      is_new: true,
+    });
+  };
+
+  const editProduct = (product: AdminProduct) => {
+    setEditingProductId(product.id);
+    setProductForm({
+      name: product.name,
+      reference: product.reference ?? "",
+      category: product.category,
+      subcategory: product.subcategory ?? "",
+      price: String(product.price),
+      old_price: product.old_price ? String(product.old_price) : "",
+      image_url: product.image_url ?? product.images?.[0] ?? "",
+      description: product.description ?? "",
+      is_best_seller: product.is_best_seller,
+      is_new: product.is_new,
+    });
+    setTab("add-product");
+  };
+
   const submitProduct = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!session) return;
@@ -238,7 +275,7 @@ export default function AdminPage() {
       return;
     }
     try {
-      await adminCreateProduct(session.token, {
+      const payload = {
         name: productForm.name.trim(),
         reference: productForm.reference.trim(),
         category: productForm.category,
@@ -250,9 +287,15 @@ export default function AdminPage() {
         description: productForm.description.trim(),
         is_best_seller: productForm.is_best_seller,
         is_new: productForm.is_new,
-      });
-      toast.success("Produit ajouté");
-      setProductForm((current) => ({ ...current, name: "", reference: "", price: "", old_price: "", image_url: "", description: "" }));
+      };
+      if (editingProductId) {
+        await adminUpdateProduct(session.token, editingProductId, payload);
+        toast.success("Produit modifié");
+      } else {
+        await adminCreateProduct(session.token, payload);
+        toast.success("Produit ajouté");
+      }
+      resetProductForm();
       setTab("products");
       await refresh();
     } catch {
@@ -423,7 +466,7 @@ export default function AdminPage() {
                 <p className="text-sm font-semibold text-slate-500">
                   {dashboard.products.length} produits synchronisés avec le site.
                 </p>
-                <Button onClick={() => setTab("add-product")} className="h-11 rounded-xl bg-pink-600 px-5 hover:bg-pink-700">
+                <Button onClick={() => { resetProductForm(); setTab("add-product"); }} className="h-11 rounded-xl bg-pink-600 px-5 hover:bg-pink-700">
                   <Plus className="h-4 w-4" />
                   Ajouter un produit
                 </Button>
@@ -461,6 +504,9 @@ export default function AdminPage() {
                             </div>
                           </td>
                           <td className="py-4 text-right">
+                            <button type="button" onClick={() => editProduct(product)} className="mr-2 inline-flex h-9 w-9 items-center justify-center rounded-xl text-slate-400 hover:bg-pink-50 hover:text-pink-600" aria-label="Modifier le produit">
+                              <Pencil className="h-4 w-4" />
+                            </button>
                             <button type="button" onClick={() => removeProduct(product.id)} className="inline-flex h-9 w-9 items-center justify-center rounded-xl text-slate-400 hover:bg-red-50 hover:text-red-600">
                               <Trash2 className="h-4 w-4" />
                             </button>
@@ -475,7 +521,7 @@ export default function AdminPage() {
           )}
 
           {tab === "add-product" && (
-            <Panel title="Ajouter un produit" icon={Plus}>
+            <Panel title={editingProductId ? "Modifier un produit" : "Ajouter un produit"} icon={editingProductId ? Pencil : Plus}>
               <form className="grid gap-6 xl:grid-cols-[0.8fr_1.2fr]" onSubmit={submitProduct}>
                 <div className="space-y-4">
                   <label className="flex min-h-[360px] cursor-pointer flex-col items-center justify-center overflow-hidden rounded-[1.5rem] border-2 border-dashed border-pink-200 bg-pink-50/70 p-4 text-center transition hover:border-pink-400 hover:bg-pink-50">
@@ -499,11 +545,11 @@ export default function AdminPage() {
 
                 <div className="space-y-4">
                   <div className="flex items-center justify-between gap-3">
-                    <Button type="button" variant="outline" onClick={() => setTab("products")} className="rounded-xl">
+                    <Button type="button" variant="outline" onClick={() => { resetProductForm(); setTab("products"); }} className="rounded-xl">
                       Retour catalogue
                     </Button>
                     <Button type="submit" className="h-11 rounded-xl bg-pink-600 px-6 hover:bg-pink-700">
-                      Enregistrer le produit
+                      {editingProductId ? "Enregistrer les modifications" : "Enregistrer le produit"}
                     </Button>
                   </div>
                   <Input value={productForm.name} onChange={(event) => setProductForm({ ...productForm, name: event.target.value })} placeholder="Nom du produit" />

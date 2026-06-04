@@ -1,0 +1,17 @@
+name: Supabase keepalive
+
+on:
+  schedule:
+    - cron: "17 3 */3 * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase REST API
+        run: |
+          curl --fail --show-error --silent \
+            "https://ecjvcilxbwpnliibgybv.supabase.co/rest/v1/products?select=id&limit=1" \
+            -H "apikey: sb_publishable_TTKdey8dP35cIr-NsiYTZg_VJM9httB" \
+            -H "Authorization: Bearer sb_publishable_TTKdey8dP35cIr-NsiYTZg_VJM9httB"

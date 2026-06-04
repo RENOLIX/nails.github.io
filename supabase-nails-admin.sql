@@ -262,6 +262,43 @@ begin
 end;
 $$;
 
+create or replace function public.admin_update_product(session_token text, product_id uuid, product jsonb)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public, extensions
+as $$
+declare
+  account public.admin_users;
+  updated public.products;
+begin
+  account := public.private_admin_from_token(session_token);
+
+  update public.products
+  set
+    name = product->>'name',
+    reference = nullif(product->>'reference', ''),
+    description = nullif(product->>'description', ''),
+    category = product->>'category',
+    subcategory = nullif(product->>'subcategory', ''),
+    price = (product->>'price')::numeric,
+    old_price = nullif(product->>'old_price', '')::numeric,
+    image_url = nullif(product->>'image_url', ''),
+    images = coalesce(product->'images', '[]'::jsonb),
+    is_best_seller = coalesce((product->>'is_best_seller')::boolean, false),
+    is_new = coalesce((product->>'is_new')::boolean, false),
+    active = true
+  where products.id = product_id
+  returning * into updated;
+
+  if updated.id is null then
+    raise exception 'Product not found';
+  end if;
+
+  return to_jsonb(updated);
+end;
+$$;
+
 create or replace function public.admin_create_user(
   session_token text,
   new_email text,
@@ -328,6 +365,7 @@ $$;
 grant execute on function public.admin_login(text, text) to anon;
 grant execute on function public.admin_dashboard_data(text) to anon;
 grant execute on function public.admin_create_product(text, jsonb) to anon;
+grant execute on function public.admin_update_product(text, uuid, jsonb) to anon;
 grant execute on function public.admin_delete_product(text, uuid) to anon;
 grant execute on function public.admin_create_user(text, text, text, text, text) to anon;
 grant execute on function public.admin_delete_user(text, uuid) to anon;

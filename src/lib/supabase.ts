@@ -266,6 +266,39 @@ export function adminCreateProduct(token: string, product: ProductInput) {
   });
 }
 
+export function adminUpdateProduct(token: string, productId: string, product: ProductInput) {
+  if (isLocalToken(token)) {
+    const data = readLocalDashboard();
+    let updated: AdminProduct | undefined;
+    data.products = data.products.map((entry) => {
+      if (entry.id !== productId) return entry;
+      updated = {
+        ...entry,
+        name: product.name,
+        reference: product.reference || null,
+        description: product.description || null,
+        category: product.category,
+        subcategory: product.subcategory || null,
+        price: product.price,
+        old_price: product.old_price ?? null,
+        image_url: product.image_url || null,
+        images: product.images ?? [],
+        is_best_seller: Boolean(product.is_best_seller),
+        is_new: Boolean(product.is_new),
+        active: true,
+      };
+      return updated;
+    });
+    writeLocalDashboard(data);
+    return Promise.resolve(updated ?? data.products.find((entry) => entry.id === productId)!);
+  }
+  return rpc<AdminProduct>("admin_update_product", {
+    session_token: token,
+    product_id: productId,
+    product,
+  });
+}
+
 export function adminDeleteProduct(token: string, productId: string) {
   if (isLocalToken(token)) {
     const data = readLocalDashboard();
