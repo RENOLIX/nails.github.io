@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Heart, Menu, Search, ShoppingBag, X } from "lucide-react";
+import { Heart, Search, ShoppingBag, X } from "lucide-react";
 import { useState } from "react";
 import { Input } from "@/components/ui/input.tsx";
 import { useCart } from "@/components/providers/cart";
@@ -17,7 +17,6 @@ function CartBadge() {
 export function NavbarPublic() {
   const navigate = useNavigate();
   const [searchOpen, setSearchOpen] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
   const handleSearch = (event: React.FormEvent) => {
@@ -34,14 +33,6 @@ export function NavbarPublic() {
       <div className="mx-auto max-w-7xl px-4">
         <div className="flex h-16 items-center justify-between md:h-20">
           <div className="flex w-1/3 items-center gap-1">
-            <button
-              type="button"
-              onClick={() => setMenuOpen((value) => !value)}
-              className="rounded-full p-2 transition-colors hover:bg-pink-200/50 md:hidden"
-              aria-label="Menu"
-            >
-              <Menu className="h-5 w-5 text-pink-700" />
-            </button>
             {searchOpen ? (
               <form onSubmit={handleSearch} className="flex w-full items-center gap-2">
                 <Input
@@ -95,23 +86,6 @@ export function NavbarPublic() {
             </Link>
           </div>
         </div>
-
-        <nav className={`${menuOpen ? "flex" : "hidden"} border-t border-pink-200 py-3 md:flex md:border-0 md:py-0`}>
-          <div className="flex w-full flex-col gap-2 text-sm font-semibold text-pink-900 md:flex-row md:items-center md:justify-center md:gap-8">
-            <Link to="/products" onClick={() => setMenuOpen(false)} className="rounded-full px-3 py-2 hover:bg-white/50">
-              Boutique
-            </Link>
-            <Link to="/products/vernis" onClick={() => setMenuOpen(false)} className="rounded-full px-3 py-2 hover:bg-white/50">
-              Vernis
-            </Link>
-            <Link to="/products/gels" onClick={() => setMenuOpen(false)} className="rounded-full px-3 py-2 hover:bg-white/50">
-              Gels
-            </Link>
-            <Link to="/wishlist" onClick={() => setMenuOpen(false)} className="rounded-full px-3 py-2 hover:bg-white/50">
-              Avis clientes
-            </Link>
-          </div>
-        </nav>
       </div>
     </header>
   );

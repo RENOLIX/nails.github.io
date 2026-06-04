@@ -1,15 +1,15 @@
 import type { LucideIcon } from "lucide-react";
 import {
-  Brush,
-  Droplets,
-  Gem,
-  Layers,
-  Link2,
-  Package,
   Paintbrush,
-  Sparkles,
+  Layers,
+  Brush,
   Wrench,
+  Gem,
+  Droplets,
+  Sparkles,
+  Link2,
   Zap,
+  Package,
 } from "lucide-react";
 
 export type SubCategory = {
@@ -22,7 +22,7 @@ export type Category = {
   label: string;
   icon: LucideIcon;
   color: string;
-  image: string;
+  image?: string;
   subcategories: SubCategory[];
 };
 
@@ -49,9 +49,30 @@ export const CATEGORIES: Category[] = [
       { id: "venalisa", label: "Venalisa" },
     ],
   },
-  { id: "pinceau", label: "Pinceau", icon: Brush, color: "#fdba74", image: "https://hercules-cdn.com/file_0k64ARE9trLk3yCFUeM3TwqG", subcategories: [] },
-  { id: "tools", label: "Tools", icon: Wrench, color: "#d8b4fe", image: "https://hercules-cdn.com/file_5PMdmdYL1K4dAOwTB9Ql7YyW", subcategories: [] },
-  { id: "capsules", label: "Capsules", icon: Gem, color: "#a5f3fc", image: "https://hercules-cdn.com/file_kGUpxK72XaaIBgGOIXY7vrxZ", subcategories: [] },
+  {
+    id: "pinceau",
+    label: "Pinceau",
+    icon: Brush,
+    color: "#fdba74",
+    image: "https://hercules-cdn.com/file_0k64ARE9trLk3yCFUeM3TwqG",
+    subcategories: [],
+  },
+  {
+    id: "tools",
+    label: "Tools",
+    icon: Wrench,
+    color: "#d8b4fe",
+    image: "https://hercules-cdn.com/file_5PMdmdYL1K4dAOwTB9Ql7YyW",
+    subcategories: [],
+  },
+  {
+    id: "capsules",
+    label: "Capsules",
+    icon: Gem,
+    color: "#a5f3fc",
+    image: "https://hercules-cdn.com/file_kGUpxK72XaaIBgGOIXY7vrxZ",
+    subcategories: [],
+  },
   {
     id: "gels",
     label: "Gels",
@@ -75,7 +96,28 @@ export const CATEGORIES: Category[] = [
       { id: "boite", label: "Boite" },
     ],
   },
-  { id: "glue", label: "Glue", icon: Link2, color: "#e9d5ff", image: "https://hercules-cdn.com/file_C74VROiqXB1r39qCix3wF2Bs", subcategories: [] },
-  { id: "appareil", label: "Appareil", icon: Zap, color: "#bfdbfe", image: "https://hercules-cdn.com/file_J0OFplWLXsf3YDE3UhO57xTp", subcategories: [] },
-  { id: "embalage", label: "Emballage", icon: Package, color: "#fed7aa", image: "https://hercules-cdn.com/file_eL3rYeVaw8CPArGodwBLRiwk", subcategories: [] },
+  {
+    id: "glue",
+    label: "Glue",
+    icon: Link2,
+    color: "#e9d5ff",
+    image: "https://hercules-cdn.com/file_C74VROiqXB1r39qCix3wF2Bs",
+    subcategories: [],
+  },
+  {
+    id: "appareil",
+    label: "Appareil",
+    icon: Zap,
+    color: "#bfdbfe",
+    image: "https://hercules-cdn.com/file_J0OFplWLXsf3YDE3UhO57xTp",
+    subcategories: [],
+  },
+  {
+    id: "embalage",
+    label: "Emballage",
+    icon: Package,
+    color: "#fed7aa",
+    image: "https://hercules-cdn.com/file_eL3rYeVaw8CPArGodwBLRiwk",
+    subcategories: [],
+  },
 ];
