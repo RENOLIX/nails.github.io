@@ -3,22 +3,26 @@ import { Link } from "react-router-dom";
 import { motion } from "motion/react";
 
 const HERO_IMAGE = "/nails.github.io/images/dvok-glace-individual.webp";
+const HERO_MOBILE_IMAGE = "/nails.github.io/images/dvok-glace-mobile.jpeg";
 
 export default function Hero() {
   return (
-    <section className="bg-white px-4 py-6">
+    <section className="bg-white">
       <motion.div
-        className="mx-auto max-w-7xl overflow-hidden rounded-2xl bg-[#f8f1ea]"
+        className="w-full overflow-hidden bg-[#f8f1ea]"
         initial={{ opacity: 0, y: 14 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.65, ease: "easeOut" }}
       >
         <Link to="/products/vernis">
-          <img
-            src={HERO_IMAGE}
-            alt="DVOK Glacé Collection"
-            className="block h-auto max-h-[420px] w-full object-contain"
-          />
+          <picture>
+            <source media="(max-width: 767px)" srcSet={HERO_MOBILE_IMAGE} />
+            <img
+              src={HERO_IMAGE}
+              alt="DVOK Glacé Collection"
+              className="block h-auto w-full object-cover"
+            />
+          </picture>
         </Link>
       </motion.div>
     </section>
