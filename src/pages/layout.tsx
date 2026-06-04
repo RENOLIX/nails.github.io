@@ -4,9 +4,9 @@ import Footer from "@/components/Footer.tsx";
 
 export default function AppLayout() {
   return (
-    <div className="flex min-h-screen flex-col bg-white">
+    <div className="flex min-h-screen flex-col overflow-x-hidden bg-white">
       <NavbarPublic />
-      <main className="flex-1 pt-16 md:pt-20">
+      <main className="min-w-0 flex-1 overflow-x-hidden pt-16 md:pt-20">
         <Outlet />
       </main>
       <Footer />

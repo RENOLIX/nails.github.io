@@ -29,33 +29,30 @@ export function NavbarPublic() {
   };
 
   return (
-    <header className="fixed left-0 right-0 top-0 z-[100] w-full border-b border-pink-100 bg-[#fadbe0] shadow-sm">
-      <div className="mx-auto max-w-7xl px-4">
+    <header className="fixed inset-x-0 top-0 z-[9999] w-full overflow-visible border-b border-pink-100 bg-[#fadbe0] shadow-sm">
+      <div className="relative mx-auto max-w-7xl px-4">
         <div className="flex h-16 items-center justify-between md:h-20">
           <div className="flex w-1/3 items-center gap-1">
-            {searchOpen ? (
-              <form onSubmit={handleSearch} className="flex w-full items-center gap-2">
-                <Input
-                  autoFocus
-                  value={searchQuery}
-                  onChange={(event) => setSearchQuery(event.target.value)}
-                  placeholder="Rechercher..."
-                  className="h-8 border-pink-200 bg-white/80 text-sm"
-                />
-                <button type="button" onClick={() => setSearchOpen(false)} className="cursor-pointer">
-                  <X className="h-5 w-5 text-pink-500" />
-                </button>
-              </form>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setSearchOpen(true)}
-                className="cursor-pointer rounded-full p-2 transition-colors hover:bg-pink-200/50"
-                aria-label="Rechercher"
-              >
+            <form onSubmit={handleSearch} className="hidden w-full items-center gap-2 md:flex">
+              <Input
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder="Rechercher..."
+                className="h-8 border-pink-200 bg-white/80 text-sm"
+              />
+              <button type="submit" className="cursor-pointer rounded-full p-2 transition-colors hover:bg-pink-200/50">
                 <Search className="h-5 w-5 text-pink-700" />
               </button>
-            )}
+            </form>
+
+            <button
+              type="button"
+              onClick={() => setSearchOpen((value) => !value)}
+              className="cursor-pointer rounded-full p-2 transition-colors hover:bg-pink-200/50 md:hidden"
+              aria-label={searchOpen ? "Fermer la recherche" : "Rechercher"}
+            >
+              {searchOpen ? <X className="h-5 w-5 text-pink-700" /> : <Search className="h-5 w-5 text-pink-700" />}
+            </button>
           </div>
 
           <div className="flex w-1/3 justify-center">
@@ -86,6 +83,34 @@ export function NavbarPublic() {
             </Link>
           </div>
         </div>
+
+        {searchOpen ? (
+          <div className="absolute left-0 right-0 top-full border-t border-pink-200 bg-[#fadbe0] px-4 py-3 shadow-lg md:hidden">
+            <form onSubmit={handleSearch} className="mx-auto flex max-w-xl items-center gap-2 rounded-2xl bg-white/85 p-2 shadow-sm ring-1 ring-pink-100">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-pink-50">
+                <Search className="h-4 w-4 text-pink-600" />
+              </div>
+              <Input
+                autoFocus
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder="Rechercher..."
+                className="h-9 border-0 bg-transparent px-1 shadow-none focus:ring-0"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchOpen(false);
+                  setSearchQuery("");
+                }}
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-pink-50 text-pink-600"
+                aria-label="Fermer"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </form>
+          </div>
+        ) : null}
       </div>
     </header>
   );

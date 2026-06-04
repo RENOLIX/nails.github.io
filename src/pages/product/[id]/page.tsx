@@ -31,13 +31,17 @@ export default function ProductDetailPage() {
   };
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8">
-      <div className="grid gap-10 lg:grid-cols-[1fr_0.9fr]">
-        <section>
-          <div className="overflow-hidden rounded-3xl bg-pink-50">
-            <img src={product.images[activeImage]} alt={product.name} className="aspect-square h-full w-full object-cover" />
+    <div className="mx-auto w-full max-w-7xl overflow-x-hidden px-4 py-6 md:py-8">
+      <div className="grid min-w-0 gap-8 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,0.85fr)] lg:gap-10">
+        <section className="min-w-0">
+          <div className="mx-auto max-w-md overflow-hidden rounded-3xl bg-pink-50 lg:max-w-none">
+            <img
+              src={product.images[activeImage]}
+              alt={product.name}
+              className="aspect-square w-full object-cover"
+            />
           </div>
-          <div className="mt-4 grid grid-cols-4 gap-3">
+          <div className="mx-auto mt-4 grid max-w-md grid-cols-4 gap-2 sm:gap-3 lg:max-w-none">
             {product.images.map((image, index) => (
               <button
                 key={`${image}-${index}`}
@@ -51,17 +55,17 @@ export default function ProductDetailPage() {
           </div>
         </section>
 
-        <section className="pt-2">
+        <section className="min-w-0 pt-2">
           <Link to="/products" className="text-sm font-bold text-pink-600">Retour aux produits</Link>
-          <h1 className="mt-3 text-4xl font-extrabold text-gray-950 md:text-5xl">{product.name}</h1>
+          <h1 className="mt-3 text-3xl font-extrabold leading-tight text-gray-950 md:text-5xl">{product.name}</h1>
           <p className="mt-2 text-sm font-semibold text-gray-400">{product.reference}</p>
-          <div className="mt-5 flex items-end gap-3">
-            <span className="text-3xl font-extrabold text-pink-600">{formatDzd(product.price)}</span>
+          <div className="mt-5 flex flex-wrap items-end gap-3">
+            <span className="text-2xl font-extrabold text-pink-600 md:text-3xl">{formatDzd(product.price)}</span>
             {product.oldPrice ? <span className="text-lg font-bold text-gray-400 line-through">{formatDzd(product.oldPrice)}</span> : null}
           </div>
           <p className="mt-6 max-w-xl text-base leading-8 text-gray-600">{product.description}</p>
 
-          <div className="mt-8 flex items-center gap-3">
+          <div className="mt-8 flex flex-wrap items-center gap-3">
             <div className="flex h-11 items-center rounded-full border border-pink-100 bg-white">
               <button type="button" onClick={() => setQuantity(Math.max(1, quantity - 1))} className="px-4 text-pink-700">
                 <Minus className="h-4 w-4" />
@@ -71,11 +75,11 @@ export default function ProductDetailPage() {
                 <Plus className="h-4 w-4" />
               </button>
             </div>
-            <Button onClick={handleAdd} className="h-11 rounded-full bg-pink-600 px-6 hover:bg-pink-700">
+            <Button onClick={handleAdd} className="h-11 flex-1 rounded-full bg-pink-600 px-5 hover:bg-pink-700 sm:flex-none sm:px-6">
               <ShoppingBag className="h-4 w-4" />
               Ajouter au panier
             </Button>
-            <Button asChild variant="outline" className="h-11 rounded-full border-pink-200 text-pink-700">
+            <Button asChild variant="outline" className="h-11 rounded-full border-pink-200 px-5 text-pink-700">
               <Link to="/wishlist"><Heart className="h-4 w-4" /> Avis</Link>
             </Button>
           </div>

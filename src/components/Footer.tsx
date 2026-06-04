@@ -4,7 +4,7 @@ export default function Footer() {
   return (
     <footer className="border-t border-pink-100 bg-[#fadbe0] text-gray-950">
       <div className="mx-auto flex max-w-7xl flex-col items-center gap-7 px-4 py-9 text-center md:grid md:grid-cols-3 md:items-start md:gap-10 md:py-12 md:text-left">
-        <div className="order-2 md:order-1">
+        <div className="order-2 flex flex-col items-center md:order-1 md:items-start">
           <h3 className="flex items-center justify-center gap-2 text-sm font-extrabold uppercase tracking-[0.14em] md:justify-start">
             <Clock3 className="h-4 w-4" />
             Business Hours
@@ -41,7 +41,7 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="order-3 md:text-right">
+        <div className="order-3 flex flex-col items-center md:items-end md:text-right">
           <h3 className="flex items-center justify-center gap-2 text-sm font-extrabold uppercase tracking-[0.14em] md:justify-end">
             Contact Us
             <Mail className="h-4 w-4" />

@@ -1,10 +1,8 @@
 import { Link } from "react-router-dom";
-import { Heart, ShoppingBag, Star } from "lucide-react";
+import { Heart, Star } from "lucide-react";
 import { motion } from "motion/react";
-import { toast } from "sonner";
-import { cn, formatDzd } from "@/lib/utils.ts";
+import { formatDzd } from "@/lib/utils.ts";
 import type { Product } from "@/lib/products";
-import { useCart } from "@/components/providers/cart";
 
 type Props = {
   product: Product;
@@ -12,15 +10,6 @@ type Props = {
 };
 
 export default function ProductCard({ product, showBestSeller = false }: Props) {
-  const { addToCart } = useCart();
-
-  const handleAdd = (event: React.MouseEvent) => {
-    event.preventDefault();
-    event.stopPropagation();
-    addToCart(product.id, 1);
-    toast.success("Ajouté au panier");
-  };
-
   return (
     <Link to={`/product/${product.id}`} className="block group">
       <motion.div
@@ -48,16 +37,6 @@ export default function ProductCard({ product, showBestSeller = false }: Props) 
           >
             <Heart className="h-3.5 w-3.5" />
           </Link>
-          <button
-            type="button"
-            onClick={handleAdd}
-            className={cn(
-              "absolute bottom-2 right-2 z-10 rounded-full bg-pink-500 p-1.5 text-white opacity-0 transition group-hover:opacity-100 hover:bg-pink-600",
-            )}
-            aria-label="Ajouter au panier"
-          >
-            <ShoppingBag className="h-3.5 w-3.5" />
-          </button>
         </div>
 
         <div className="p-3">
