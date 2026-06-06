@@ -28,6 +28,38 @@ export default function ProductsPage() {
       ? `${findCategoryLabel(category)}${currentSubcategory ? ` — ${currentSubcategory.label}` : ""}`
       : "Tous les produits";
 
+  if (!category) {
+    return (
+      <div className="mx-auto max-w-7xl px-4 py-8">
+        <div className="mb-7 text-center">
+          <h1 className="text-3xl font-extrabold text-gray-950 md:text-4xl">Catégories</h1>
+        </div>
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+          {CATEGORIES.map((entry) => (
+            <Link
+              key={entry.id}
+              to={`/products/${entry.id}`}
+              className="group overflow-hidden rounded-2xl border border-pink-100 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+            >
+              <div className="relative aspect-square overflow-hidden bg-pink-50">
+                <SafeImage
+                  src={entry.image}
+                  alt={entry.label}
+                  fallbackLabel={entry.label}
+                  className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
+                <span className="absolute bottom-3 left-0 right-0 text-center text-base font-extrabold text-white">
+                  {entry.label}
+                </span>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">
       <nav className="mb-6 flex flex-wrap items-center gap-2 text-sm text-slate-400">
@@ -72,14 +104,16 @@ export default function ProductsPage() {
 
       {currentCategory?.subcategories.length && !collection ? (
         <div className="mb-7 flex flex-wrap gap-2">
-          <Link
-            to={`/products/${currentCategory.id}`}
-            className={`rounded-full px-5 py-2 text-sm font-semibold ${
-              !subcategory ? "bg-pink-500 text-white" : "bg-slate-100 text-slate-700 hover:bg-pink-50"
-            }`}
-          >
-            Tout
-          </Link>
+          {!isCanni && (
+            <Link
+              to={`/products/${currentCategory.id}`}
+              className={`rounded-full px-5 py-2 text-sm font-semibold ${
+                !subcategory ? "bg-pink-500 text-white" : "bg-slate-100 text-slate-700 hover:bg-pink-50"
+              }`}
+            >
+              Tout
+            </Link>
+          )}
           {currentCategory.subcategories.map((entry) => (
             <Link
               key={entry.id}

@@ -17,7 +17,30 @@ export function ProductsProvider({ children }: PropsWithChildren) {
     let alive = true;
     listPublicProducts()
       .then((nextProducts) => {
-        if (alive) setProducts(nextProducts);
+        if (!alive) return;
+
+        const mergedProducts = nextProducts.map((product) => {
+          const localMatch = PRODUCTS.find(
+            (localProduct) =>
+              localProduct.id === product.id ||
+              (localProduct.reference &&
+                product.reference &&
+                localProduct.reference.toLowerCase() === product.reference.toLowerCase()),
+          );
+
+          return localMatch ? { ...localMatch, ...product, id: localMatch.id } : product;
+        });
+
+        const remoteReferences = new Set(
+          nextProducts.map((product) => product.reference?.toLowerCase()).filter(Boolean),
+        );
+        const missingLocalProducts = PRODUCTS.filter(
+          (product) =>
+            !mergedProducts.some((entry) => entry.id === product.id) &&
+            (!product.reference || !remoteReferences.has(product.reference.toLowerCase())),
+        );
+
+        setProducts([...mergedProducts, ...missingLocalProducts]);
       })
       .catch(() => {
         if (alive) setProducts(PRODUCTS);
