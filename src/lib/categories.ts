@@ -26,13 +26,16 @@ export type Category = {
   subcategories: SubCategory[];
 };
 
+const categoryImage = (name: string) =>
+  `${import.meta.env.BASE_URL}images/categories/${name}.png`;
+
 export const CATEGORIES: Category[] = [
   {
     id: "vernis",
     label: "Vernis",
     icon: Paintbrush,
     color: "#f9a8d4",
-    image: "https://hercules-cdn.com/file_P6Bb0DrBd4FZQXdNswwBIbH6",
+    image: categoryImage("vernis"),
     subcategories: [
       { id: "canni", label: "Canni" },
       { id: "venalisa", label: "Venalisa" },
@@ -43,7 +46,7 @@ export const CATEGORIES: Category[] = [
     label: "Coats",
     icon: Layers,
     color: "#fca5a5",
-    image: "https://hercules-cdn.com/file_8r6fY6tok9GV86nd3obHx0NV",
+    image: categoryImage("coats"),
     subcategories: [
       { id: "canni", label: "Canni" },
       { id: "venalisa", label: "Venalisa" },
@@ -54,7 +57,7 @@ export const CATEGORIES: Category[] = [
     label: "Pinceau",
     icon: Brush,
     color: "#fdba74",
-    image: "https://hercules-cdn.com/file_0k64ARE9trLk3yCFUeM3TwqG",
+    image: categoryImage("pinceau"),
     subcategories: [],
   },
   {
@@ -62,7 +65,7 @@ export const CATEGORIES: Category[] = [
     label: "Tools",
     icon: Wrench,
     color: "#d8b4fe",
-    image: "https://hercules-cdn.com/file_5PMdmdYL1K4dAOwTB9Ql7YyW",
+    image: categoryImage("tools"),
     subcategories: [],
   },
   {
@@ -70,7 +73,7 @@ export const CATEGORIES: Category[] = [
     label: "Capsules",
     icon: Gem,
     color: "#a5f3fc",
-    image: "https://hercules-cdn.com/file_kGUpxK72XaaIBgGOIXY7vrxZ",
+    image: categoryImage("capsules"),
     subcategories: [],
   },
   {
@@ -78,7 +81,7 @@ export const CATEGORIES: Category[] = [
     label: "Gels",
     icon: Droplets,
     color: "#bbf7d0",
-    image: "https://hercules-cdn.com/file_UmIrFdNvYGhn1kdpHrsPAtmN",
+    image: categoryImage("gels"),
     subcategories: [
       { id: "canni", label: "Canni" },
       { id: "venalisa", label: "Venalisa" },
@@ -90,7 +93,7 @@ export const CATEGORIES: Category[] = [
     label: "Décoration",
     icon: Sparkles,
     color: "#fde68a",
-    image: "https://hercules-cdn.com/file_qD1QGZqzNqF1W3KVnpE3x63l",
+    image: categoryImage("decoration"),
     subcategories: [
       { id: "poudre", label: "Poudre" },
       { id: "boite", label: "Boite" },
@@ -101,7 +104,7 @@ export const CATEGORIES: Category[] = [
     label: "Glue",
     icon: Link2,
     color: "#e9d5ff",
-    image: "https://hercules-cdn.com/file_C74VROiqXB1r39qCix3wF2Bs",
+    image: categoryImage("glue"),
     subcategories: [],
   },
   {
@@ -109,7 +112,7 @@ export const CATEGORIES: Category[] = [
     label: "Appareil",
     icon: Zap,
     color: "#bfdbfe",
-    image: "https://hercules-cdn.com/file_J0OFplWLXsf3YDE3UhO57xTp",
+    image: categoryImage("appareil"),
     subcategories: [],
   },
   {
@@ -117,7 +120,7 @@ export const CATEGORIES: Category[] = [
     label: "Emballage",
     icon: Package,
     color: "#fed7aa",
-    image: "https://hercules-cdn.com/file_eL3rYeVaw8CPArGodwBLRiwk",
+    image: categoryImage("embalage"),
     subcategories: [],
   },
 ];

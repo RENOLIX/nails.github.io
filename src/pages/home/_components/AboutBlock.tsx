@@ -1,6 +1,8 @@
 import { motion } from "motion/react";
 import SafeImage from "@/components/SafeImage.tsx";
 
+const MASCOT_IMAGE = `${import.meta.env.BASE_URL}images/about/nailsy-mascot.jpeg`;
+
 export default function AboutBlock() {
   return (
     <section className="mx-auto max-w-7xl px-4 py-16">
@@ -13,7 +15,7 @@ export default function AboutBlock() {
           transition={{ duration: 0.6, ease: "easeOut" }}
         >
           <SafeImage
-            src="https://hercules-cdn.com/file_T5Qx2VbSBP6ngFTmlPDN5ZK6"
+            src={MASCOT_IMAGE}
             alt="Nailsy mascot"
             fallbackLabel="Nailsy Magic"
             fallbackClassName="bg-pink-50"
