@@ -1,7 +1,7 @@
 {
   "name": "Nailsy Magic",
   "short_name": "Nailsy",
-  "start_url": "/nails.github.io/",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#fadbe0",

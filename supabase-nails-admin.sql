@@ -59,6 +59,12 @@ alter table public.products add column if not exists canni_collection text;
 alter table public.products add column if not exists colors jsonb not null default '[]'::jsonb;
 update public.products set stock = 20 where stock is null;
 update public.products
+set
+  image_url = replace(image_url, 'https://renolix.github.io/nails.github.io/', 'https://nailsy.store/'),
+  images = replace(images::text, 'https://renolix.github.io/nails.github.io/', 'https://nailsy.store/')::jsonb
+where coalesce(image_url, '') like 'https://renolix.github.io/nails.github.io/%'
+   or images::text like '%https://renolix.github.io/nails.github.io/%';
+update public.products
 set canni_collection = lower(reference)
 where category = 'vernis'
   and subcategory = 'canni'
@@ -536,8 +542,8 @@ select
   'vernis',
   'canni',
   850,
-  'https://renolix.github.io/nails.github.io/images/canni/cc' || collection_number || '.webp',
-  jsonb_build_array('https://renolix.github.io/nails.github.io/images/canni/cc' || collection_number || '.webp'),
+  'https://nailsy.store/images/canni/cc' || collection_number || '.webp',
+  jsonb_build_array('https://nailsy.store/images/canni/cc' || collection_number || '.webp'),
   20,
   'cc' || collection_number,
   '[]'::jsonb,

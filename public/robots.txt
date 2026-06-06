@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://renolix.github.io/nails.github.io/sitemap.xml
+Sitemap: https://nailsy.store/sitemap.xml
