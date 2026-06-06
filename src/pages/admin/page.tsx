@@ -14,6 +14,7 @@ import {
   Trash2,
   UserPlus,
   Users,
+  X,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -30,15 +31,19 @@ import {
   adminDeleteProduct,
   adminDeleteUser,
   adminLogin,
+  adminUpdateOrder,
   adminUpdateProduct,
   loadAdminDashboard,
   type AdminProduct,
   type AdminDashboardData,
   type AdminRole,
   type AdminSession,
+  type OrderUpdateInput,
+  type OrderStatus,
 } from "@/lib/supabase.ts";
 
 const SESSION_KEY = "nails-admin-session";
+const MAX_PRODUCT_IMAGES = 6;
 
 type AdminTab = "overview" | "products" | "add-product" | "orders" | "reviews" | "users";
 
@@ -64,6 +69,33 @@ function formatDate(value: string) {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(value));
+}
+
+function compressProductImage(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = reject;
+    reader.onload = () => {
+      const image = new Image();
+      image.onerror = reject;
+      image.onload = () => {
+        const maxSize = 1400;
+        const scale = Math.min(1, maxSize / Math.max(image.width, image.height));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.max(1, Math.round(image.width * scale));
+        canvas.height = Math.max(1, Math.round(image.height * scale));
+        const context = canvas.getContext("2d");
+        if (!context) {
+          reject(new Error("Canvas unavailable"));
+          return;
+        }
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL("image/jpeg", 0.82));
+      };
+      image.src = String(reader.result);
+    };
+    reader.readAsDataURL(file);
+  });
 }
 
 function StatCard({
@@ -188,7 +220,8 @@ export default function AdminPage() {
     subcategory: "",
     price: "",
     old_price: "",
-    image_url: "",
+    images: [] as string[],
+    stock: "20",
     description: "",
     is_best_seller: false,
     is_new: true,
@@ -203,7 +236,7 @@ export default function AdminPage() {
   const totals = useMemo(
     () => ({
       revenue: dashboard.orders.reduce((sum, order) => sum + Number(order.total || 0), 0),
-      pendingOrders: dashboard.orders.filter((order) => order.status === "new").length,
+      pendingOrders: dashboard.orders.filter((order) => order.status === "new" || order.status === "pending").length,
       pendingReviews: dashboard.reviews.filter((review) => !review.approved).length,
     }),
     [dashboard],
@@ -243,7 +276,8 @@ export default function AdminPage() {
       subcategory: "",
       price: "",
       old_price: "",
-      image_url: "",
+      images: [],
+      stock: "20",
       description: "",
       is_best_seller: false,
       is_new: true,
@@ -259,7 +293,8 @@ export default function AdminPage() {
       subcategory: product.subcategory ?? "",
       price: String(product.price),
       old_price: product.old_price ? String(product.old_price) : "",
-      image_url: product.image_url ?? product.images?.[0] ?? "",
+      images: product.images?.length ? product.images : product.image_url ? [product.image_url] : [],
+      stock: String(product.stock ?? 20),
       description: product.description ?? "",
       is_best_seller: product.is_best_seller,
       is_new: product.is_new,
@@ -282,8 +317,9 @@ export default function AdminPage() {
         subcategory: productForm.subcategory.trim(),
         price: Number(productForm.price),
         old_price: productForm.old_price ? Number(productForm.old_price) : undefined,
-        image_url: productForm.image_url.trim(),
-        images: productForm.image_url.trim() ? [productForm.image_url.trim()] : [],
+        image_url: productForm.images[0] ?? "",
+        images: productForm.images,
+        stock: Math.max(0, Number(productForm.stock) || 0),
         description: productForm.description.trim(),
         is_best_seller: productForm.is_best_seller,
         is_new: productForm.is_new,
@@ -303,18 +339,28 @@ export default function AdminPage() {
     }
   };
 
-  const handleProductImage = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      toast.error("Choisissez une image.");
+  const handleProductImages = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files ?? []);
+    event.target.value = "";
+    if (files.length === 0) return;
+    if (files.some((file) => !file.type.startsWith("image/"))) {
+      toast.error("Choisissez uniquement des images.");
       return;
     }
-    const reader = new FileReader();
-    reader.onload = () => {
-      setProductForm((current) => ({ ...current, image_url: String(reader.result || "") }));
-    };
-    reader.readAsDataURL(file);
+    const availableSlots = MAX_PRODUCT_IMAGES - productForm.images.length;
+    if (availableSlots <= 0) {
+      toast.error(`Maximum ${MAX_PRODUCT_IMAGES} photos par produit.`);
+      return;
+    }
+    try {
+      const compressed = await Promise.all(files.slice(0, availableSlots).map(compressProductImage));
+      setProductForm((current) => ({ ...current, images: [...current.images, ...compressed] }));
+      if (files.length > availableSlots) {
+        toast.info(`Seules ${MAX_PRODUCT_IMAGES} photos maximum ont été conservées.`);
+      }
+    } catch {
+      toast.error("Impossible de préparer une des images.");
+    }
   };
 
   const removeProduct = async (productId: string) => {
@@ -359,6 +405,13 @@ export default function AdminPage() {
     } catch {
       toast.error("Suppression utilisateur impossible.");
     }
+  };
+
+  const saveOrder = async (orderId: string, order: OrderUpdateInput) => {
+    if (!session) return;
+    await adminUpdateOrder(session.token, orderId, order);
+    toast.success("Commande mise à jour");
+    await refresh();
   };
 
   if (!session) {
@@ -478,6 +531,7 @@ export default function AdminPage() {
                         <th className="pb-3">Produit</th>
                         <th className="pb-3">Catégorie</th>
                         <th className="pb-3">Prix</th>
+                        <th className="pb-3">Stock</th>
                         <th className="pb-3">Tags</th>
                         <th className="pb-3 text-right">Action</th>
                       </tr>
@@ -496,6 +550,11 @@ export default function AdminPage() {
                           </td>
                           <td className="py-4 font-semibold text-slate-600">{product.category}{product.subcategory ? ` / ${product.subcategory}` : ""}</td>
                           <td className="py-4 font-black text-pink-600">{formatDzd(Number(product.price))}</td>
+                          <td className="py-4">
+                            <span className={`rounded-full px-3 py-1 text-xs font-black ${Number(product.stock ?? 20) > 0 ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}`}>
+                              {Number(product.stock ?? 20) > 0 ? `${Number(product.stock ?? 20)} disponible${Number(product.stock ?? 20) > 1 ? "s" : ""}` : "Rupture"}
+                            </span>
+                          </td>
                           <td className="py-4">
                             <div className="flex flex-wrap gap-2">
                               {product.is_new && <Tag>Nouveau</Tag>}
@@ -524,23 +583,45 @@ export default function AdminPage() {
             <Panel title={editingProductId ? "Modifier un produit" : "Ajouter un produit"} icon={editingProductId ? Pencil : Plus}>
               <form className="grid gap-6 xl:grid-cols-[0.8fr_1.2fr]" onSubmit={submitProduct}>
                 <div className="space-y-4">
-                  <label className="flex min-h-[360px] cursor-pointer flex-col items-center justify-center overflow-hidden rounded-[1.5rem] border-2 border-dashed border-pink-200 bg-pink-50/70 p-4 text-center transition hover:border-pink-400 hover:bg-pink-50">
-                    {productForm.image_url ? (
-                      <SafeImage src={productForm.image_url} alt="Aperçu produit" fallbackLabel="Aperçu" className="h-full max-h-[420px] w-full rounded-2xl object-cover" />
+                  <label className="flex min-h-[280px] cursor-pointer flex-col items-center justify-center overflow-hidden rounded-[1.5rem] border-2 border-dashed border-pink-200 bg-pink-50/70 p-4 text-center transition hover:border-pink-400 hover:bg-pink-50">
+                    {productForm.images[0] ? (
+                      <SafeImage src={productForm.images[0]} alt="Aperçu produit" fallbackLabel="Aperçu" className="h-full max-h-[360px] w-full rounded-2xl object-cover" />
                     ) : (
                       <div>
                         <PackagePlus className="mx-auto h-10 w-10 text-pink-400" />
-                        <p className="mt-4 text-lg font-black text-slate-950">Téléverser l'image</p>
-                        <p className="mt-2 text-sm font-semibold text-slate-500">Depuis PC ou téléphone</p>
+                        <p className="mt-4 text-lg font-black text-slate-950">Téléverser les photos</p>
+                        <p className="mt-2 text-sm font-semibold text-slate-500">Jusqu'à {MAX_PRODUCT_IMAGES} photos depuis PC ou téléphone</p>
                       </div>
                     )}
-                    <input type="file" accept="image/*" className="sr-only" onChange={handleProductImage} />
+                    <input type="file" accept="image/*" multiple className="sr-only" onChange={handleProductImages} />
                   </label>
-                  {productForm.image_url ? (
-                    <Button type="button" variant="outline" onClick={() => setProductForm({ ...productForm, image_url: "" })} className="h-11 w-full rounded-xl">
-                      Changer l'image
-                    </Button>
-                  ) : null}
+                  {productForm.images.length > 0 && (
+                    <>
+                      <div className="grid grid-cols-3 gap-2">
+                        {productForm.images.map((image, index) => (
+                          <div key={`${image.slice(0, 32)}-${index}`} className="group relative overflow-hidden rounded-xl border border-pink-100 bg-white">
+                            <SafeImage src={image} alt={`Photo ${index + 1}`} fallbackLabel={`Photo ${index + 1}`} className="aspect-square w-full object-cover" />
+                            <button
+                              type="button"
+                              onClick={() => setProductForm((current) => ({ ...current, images: current.images.filter((_, imageIndex) => imageIndex !== index) }))}
+                              className="absolute right-1 top-1 flex h-7 w-7 items-center justify-center rounded-full bg-slate-950/80 text-white"
+                              aria-label={`Supprimer la photo ${index + 1}`}
+                            >
+                              <X className="h-3.5 w-3.5" />
+                            </button>
+                            {index === 0 && <span className="absolute bottom-1 left-1 rounded-full bg-pink-600 px-2 py-1 text-[10px] font-black text-white">Couverture</span>}
+                          </div>
+                        ))}
+                      </div>
+                      {productForm.images.length < MAX_PRODUCT_IMAGES && (
+                        <label className="flex h-11 cursor-pointer items-center justify-center rounded-xl border border-slate-200 bg-white text-sm font-bold text-slate-700 hover:border-pink-300">
+                          <Plus className="mr-2 h-4 w-4" />
+                          Ajouter d'autres photos
+                          <input type="file" accept="image/*" multiple className="sr-only" onChange={handleProductImages} />
+                        </label>
+                      )}
+                    </>
+                  )}
                 </div>
 
                 <div className="space-y-4">
@@ -558,12 +639,15 @@ export default function AdminPage() {
                     <Input value={productForm.price} onChange={(event) => setProductForm({ ...productForm, price: event.target.value })} inputMode="numeric" placeholder="Prix DA" />
                   </div>
                   <div className="grid gap-3 sm:grid-cols-2">
+                    <Input value={productForm.old_price} onChange={(event) => setProductForm({ ...productForm, old_price: event.target.value })} inputMode="numeric" placeholder="Ancien prix optionnel" />
+                    <Input value={productForm.stock} onChange={(event) => setProductForm({ ...productForm, stock: event.target.value })} type="number" min="0" inputMode="numeric" placeholder="Stock disponible" />
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
                     <select value={productForm.category} onChange={(event) => setProductForm({ ...productForm, category: event.target.value })} className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm">
                       {CATEGORIES.map((category) => <option key={category.id} value={category.id}>{category.label}</option>)}
                     </select>
                     <Input value={productForm.subcategory} onChange={(event) => setProductForm({ ...productForm, subcategory: event.target.value })} placeholder="Sous-catégorie" />
                   </div>
-                  <Input value={productForm.old_price} onChange={(event) => setProductForm({ ...productForm, old_price: event.target.value })} inputMode="numeric" placeholder="Ancien prix optionnel" />
                   <Textarea value={productForm.description} onChange={(event) => setProductForm({ ...productForm, description: event.target.value })} placeholder="Description produit" />
                   <div className="grid gap-3 sm:grid-cols-2">
                     <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 px-3 py-3 text-sm font-bold">
@@ -582,7 +666,7 @@ export default function AdminPage() {
 
           {tab === "orders" && (
             <Panel title="Commandes du site" icon={Eye}>
-              <CompactOrders orders={dashboard.orders} detailed />
+              <OrdersManager orders={dashboard.orders} onSave={saveOrder} />
             </Panel>
           )}
 
@@ -686,6 +770,123 @@ function Panel({ title, icon: Icon, children }: { title: string; icon: typeof Pa
 
 function Tag({ children }: { children: React.ReactNode }) {
   return <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-600">{children}</span>;
+}
+
+const ORDER_STATUS: Record<OrderStatus, { label: string; className: string }> = {
+  pending: { label: "En attente", className: "bg-amber-50 text-amber-700" },
+  confirmed: { label: "Confirmée", className: "bg-emerald-50 text-emerald-700" },
+  cancelled: { label: "Annulée", className: "bg-red-50 text-red-700" },
+};
+
+function normalizeOrderStatus(status: string): OrderStatus {
+  if (status === "confirmed" || status === "cancelled") return status;
+  return "pending";
+}
+
+function OrdersManager({
+  orders,
+  onSave,
+}: {
+  orders: AdminDashboardData["orders"];
+  onSave: (orderId: string, order: OrderUpdateInput) => Promise<void>;
+}) {
+  if (orders.length === 0) {
+    return <p className="py-12 text-center text-sm text-slate-400">Aucune commande pour l'instant.</p>;
+  }
+
+  return (
+    <div className="space-y-4">
+      {orders.map((order) => (
+        <OrderEditor key={order.id} order={order} onSave={onSave} />
+      ))}
+    </div>
+  );
+}
+
+function OrderEditor({
+  order,
+  onSave,
+}: {
+  order: AdminDashboardData["orders"][number];
+  onSave: (orderId: string, order: OrderUpdateInput) => Promise<void>;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [draft, setDraft] = useState<OrderUpdateInput>({
+    customer_name: order.customer_name,
+    customer_phone: order.customer_phone,
+    wilaya: order.wilaya ?? "",
+    address: order.address ?? "",
+    delivery_method: order.delivery_method ?? "domicile",
+    note: order.note ?? "",
+    status: normalizeOrderStatus(order.status),
+  });
+  const statusMeta = ORDER_STATUS[draft.status];
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      await onSave(order.id, draft);
+      setEditing(false);
+    } catch {
+      toast.error("Impossible de modifier cette commande.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <article className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="font-black text-slate-950">{order.customer_name}</h3>
+            <span className={`rounded-full px-3 py-1 text-xs font-black ${statusMeta.className}`}>{statusMeta.label}</span>
+          </div>
+          <p className="mt-1 text-sm font-semibold text-slate-500">{order.customer_phone} · {order.wilaya || "Wilaya non indiquée"}</p>
+          <p className="mt-1 text-xs text-slate-400">{formatDate(order.created_at)} · #{order.id.slice(0, 8)}</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="mr-2 text-lg font-black text-pink-600">{formatDzd(Number(order.total))}</span>
+          <Button type="button" variant="outline" onClick={() => setEditing((current) => !current)} className="rounded-xl">
+            <Pencil className="h-4 w-4" />
+            {editing ? "Fermer" : "Modifier"}
+          </Button>
+        </div>
+      </div>
+
+      <div className="mt-4 grid gap-2 rounded-xl bg-slate-50 p-3 sm:grid-cols-2 lg:grid-cols-3">
+        {order.items?.map((item, index) => (
+          <div key={`${order.id}-${index}`} className="text-sm text-slate-700">
+            <span className="font-bold">{String(item.name ?? "Produit")}</span>
+            <span className="text-slate-400"> x{String(item.quantity ?? 1)}</span>
+          </div>
+        ))}
+      </div>
+
+      {editing && (
+        <div className="mt-4 grid gap-3 border-t border-slate-100 pt-4 md:grid-cols-2">
+          <Input value={draft.customer_name} onChange={(event) => setDraft({ ...draft, customer_name: event.target.value })} placeholder="Nom du client" />
+          <Input value={draft.customer_phone} onChange={(event) => setDraft({ ...draft, customer_phone: event.target.value })} placeholder="Téléphone" />
+          <Input value={draft.wilaya} onChange={(event) => setDraft({ ...draft, wilaya: event.target.value })} placeholder="Wilaya" />
+          <select value={draft.delivery_method} onChange={(event) => setDraft({ ...draft, delivery_method: event.target.value })} className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm">
+            <option value="domicile">Livraison à domicile</option>
+            <option value="bureau">Livraison au bureau</option>
+          </select>
+          <Input value={draft.address} onChange={(event) => setDraft({ ...draft, address: event.target.value })} placeholder="Adresse" className="md:col-span-2" />
+          <Textarea value={draft.note} onChange={(event) => setDraft({ ...draft, note: event.target.value })} placeholder="Note de commande" className="md:col-span-2" />
+          <select value={draft.status} onChange={(event) => setDraft({ ...draft, status: event.target.value as OrderStatus })} className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm font-bold">
+            <option value="pending">En attente</option>
+            <option value="confirmed">Confirmée</option>
+            <option value="cancelled">Annulée</option>
+          </select>
+          <Button type="button" disabled={saving} onClick={save} className="h-11 rounded-xl bg-pink-600 hover:bg-pink-700">
+            {saving ? "Enregistrement..." : "Enregistrer la commande"}
+          </Button>
+        </div>
+      )}
+    </article>
+  );
 }
 
 function CompactOrders({ orders, detailed = false }: { orders: AdminDashboardData["orders"]; detailed?: boolean }) {

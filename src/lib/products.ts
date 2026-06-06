@@ -11,6 +11,7 @@ export type Product = {
   oldPrice?: number;
   imageUrl: string;
   images: string[];
+  stock: number;
   isBestSeller?: boolean;
   isNew?: boolean;
 };
@@ -40,6 +41,7 @@ export const PRODUCTS: Product[] = [
     oldPrice: 1000,
     imageUrl: images.vernis,
     images: [images.vernis, images.coats, images.gels],
+    stock: 20,
     isBestSeller: true,
   },
   {
@@ -52,6 +54,7 @@ export const PRODUCTS: Product[] = [
     price: 850,
     imageUrl: images.vernis,
     images: [images.vernis, images.coats],
+    stock: 20,
     isNew: true,
   },
   {
@@ -64,6 +67,7 @@ export const PRODUCTS: Product[] = [
     price: 850,
     imageUrl: images.vernis,
     images: [images.vernis, images.gels],
+    stock: 20,
   },
   {
     id: "canni-cc7",
@@ -75,6 +79,7 @@ export const PRODUCTS: Product[] = [
     price: 850,
     imageUrl: images.vernis,
     images: [images.vernis, images.decoration],
+    stock: 20,
     isBestSeller: true,
   },
   {
@@ -87,6 +92,7 @@ export const PRODUCTS: Product[] = [
     price: 950,
     imageUrl: images.vernis,
     images: [images.vernis, images.decoration],
+    stock: 20,
     isNew: true,
   },
   {
@@ -99,6 +105,7 @@ export const PRODUCTS: Product[] = [
     price: 900,
     imageUrl: images.coats,
     images: [images.coats, images.vernis],
+    stock: 20,
     isBestSeller: true,
   },
   {
@@ -112,6 +119,7 @@ export const PRODUCTS: Product[] = [
     oldPrice: 1650,
     imageUrl: images.gels,
     images: [images.gels, images.capsules],
+    stock: 20,
     isNew: true,
   },
   {
@@ -124,6 +132,7 @@ export const PRODUCTS: Product[] = [
     price: 650,
     imageUrl: images.pinceau,
     images: [images.pinceau, images.decoration],
+    stock: 20,
   },
   {
     id: "capsules-soft-square",
@@ -135,6 +144,7 @@ export const PRODUCTS: Product[] = [
     price: 1200,
     imageUrl: images.capsules,
     images: [images.capsules, images.glue],
+    stock: 20,
     isBestSeller: true,
   },
   {
@@ -147,6 +157,7 @@ export const PRODUCTS: Product[] = [
     price: 700,
     imageUrl: images.decoration,
     images: [images.decoration, images.vernis],
+    stock: 20,
     isNew: true,
   },
   {
@@ -159,6 +170,7 @@ export const PRODUCTS: Product[] = [
     price: 4200,
     imageUrl: images.appareil,
     images: [images.appareil, images.tools],
+    stock: 20,
     isBestSeller: true,
   },
   {
@@ -171,6 +183,7 @@ export const PRODUCTS: Product[] = [
     price: 1850,
     imageUrl: images.tools,
     images: [images.tools, images.pinceau],
+    stock: 20,
   },
   {
     id: "nail-glue-pro",
@@ -182,6 +195,7 @@ export const PRODUCTS: Product[] = [
     price: 450,
     imageUrl: images.glue,
     images: [images.glue, images.capsules],
+    stock: 20,
   },
 ];
 

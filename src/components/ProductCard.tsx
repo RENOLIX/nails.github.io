@@ -39,6 +39,11 @@ export default function ProductCard({ product, showBestSeller = false }: Props) 
           >
             <Heart className="h-3.5 w-3.5" />
           </Link>
+          {product.stock <= 0 && (
+            <span className="absolute bottom-2 left-2 rounded-full bg-slate-950 px-3 py-1 text-[11px] font-black text-white">
+              Rupture
+            </span>
+          )}
         </div>
 
         <div className="p-3">

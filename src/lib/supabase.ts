@@ -78,6 +78,7 @@ export type AdminProduct = {
   old_price: number | null;
   image_url: string | null;
   images: string[];
+  stock: number;
   is_best_seller: boolean;
   is_new: boolean;
   active: boolean;
@@ -98,6 +99,18 @@ export type AdminOrder = {
   total: number;
   status: string;
   created_at: string;
+};
+
+export type OrderStatus = "pending" | "confirmed" | "cancelled";
+
+export type OrderUpdateInput = {
+  customer_name: string;
+  customer_phone: string;
+  wilaya: string;
+  address: string;
+  delivery_method: string;
+  note: string;
+  status: OrderStatus;
 };
 
 export type AdminReview = {
@@ -136,6 +149,7 @@ export type ProductInput = {
   old_price?: number;
   image_url?: string;
   images?: string[];
+  stock: number;
   is_best_seller?: boolean;
   is_new?: boolean;
 };
@@ -152,6 +166,7 @@ function adminProductToProduct(product: AdminProduct): Product {
     oldPrice: product.old_price ? Number(product.old_price) : undefined,
     imageUrl: product.image_url ?? "",
     images: product.images?.length ? product.images : product.image_url ? [product.image_url] : [],
+    stock: Number(product.stock ?? 20),
     isBestSeller: product.is_best_seller,
     isNew: product.is_new,
   };
@@ -169,6 +184,7 @@ function productToAdminProduct(product: Product): AdminProduct {
     old_price: product.oldPrice ?? null,
     image_url: product.imageUrl,
     images: product.images,
+    stock: product.stock,
     is_best_seller: Boolean(product.isBestSeller),
     is_new: Boolean(product.isNew),
     active: true,
@@ -207,7 +223,21 @@ function readLocalDashboard(): AdminDashboardData {
     window.localStorage.setItem(LOCAL_STORE_KEY, JSON.stringify(initial));
     return initial;
   }
-  return JSON.parse(raw) as AdminDashboardData;
+  const parsed = JSON.parse(raw) as AdminDashboardData;
+  const normalized: AdminDashboardData = {
+    ...parsed,
+    products: parsed.products.map((product) => ({
+      ...product,
+      images: product.images?.length ? product.images : product.image_url ? [product.image_url] : [],
+      stock: Number(product.stock ?? 20),
+    })),
+    orders: parsed.orders.map((order) => ({
+      ...order,
+      status: order.status === "new" ? "pending" : order.status,
+    })),
+  };
+  writeLocalDashboard(normalized);
+  return normalized;
 }
 
 function writeLocalDashboard(data: AdminDashboardData) {
@@ -251,6 +281,7 @@ export function adminCreateProduct(token: string, product: ProductInput) {
       old_price: product.old_price ?? null,
       image_url: product.image_url || null,
       images: product.images ?? [],
+      stock: product.stock,
       is_best_seller: Boolean(product.is_best_seller),
       is_new: Boolean(product.is_new),
       active: true,
@@ -283,6 +314,7 @@ export function adminUpdateProduct(token: string, productId: string, product: Pr
         old_price: product.old_price ?? null,
         image_url: product.image_url || null,
         images: product.images ?? [],
+        stock: product.stock,
         is_best_seller: Boolean(product.is_best_seller),
         is_new: Boolean(product.is_new),
         active: true,
@@ -309,6 +341,25 @@ export function adminDeleteProduct(token: string, productId: string) {
   return rpc<{ deleted: boolean }>("admin_delete_product", {
     session_token: token,
     product_id: productId,
+  });
+}
+
+export function adminUpdateOrder(token: string, orderId: string, order: OrderUpdateInput) {
+  if (isLocalToken(token)) {
+    const data = readLocalDashboard();
+    let updated: AdminOrder | undefined;
+    data.orders = data.orders.map((entry) => {
+      if (entry.id !== orderId) return entry;
+      updated = { ...entry, ...order };
+      return updated;
+    });
+    writeLocalDashboard(data);
+    return Promise.resolve(updated ?? data.orders.find((entry) => entry.id === orderId)!);
+  }
+  return rpc<AdminOrder>("admin_update_order", {
+    session_token: token,
+    order_id: orderId,
+    order_data: order,
   });
 }
 
@@ -349,7 +400,7 @@ export function adminDeleteUser(token: string, userId: string) {
   });
 }
 
-export function createOrder(order: {
+export async function createOrder(order: {
   customer_name: string;
   customer_phone: string;
   wilaya: string;
@@ -361,11 +412,19 @@ export function createOrder(order: {
   shipping: number;
   total: number;
 }) {
-  return supabaseRequest("orders", {
-    method: "POST",
-    headers: { Prefer: "return=representation" },
-    body: { ...order, status: "new" },
-  });
+  try {
+    return await rpc<AdminOrder>("create_public_order", { order_data: order });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "";
+    if (!message.toLowerCase().includes("function") && !message.includes("PGRST202")) {
+      throw error;
+    }
+    return supabaseRequest<AdminOrder[]>("orders", {
+      method: "POST",
+      headers: { Prefer: "return=representation" },
+      body: { ...order, status: "pending" },
+    });
+  }
 }
 
 export function createReview(review: { name: string; rating: number; message: string }) {

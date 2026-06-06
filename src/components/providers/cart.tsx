@@ -56,24 +56,31 @@ export function CartProvider({ children }: PropsWithChildren) {
       total: products.reduce((sum, line) => sum + line.product.price * line.quantity, 0),
       addToCart: (productId, quantity = 1) => {
         setLines((current) => {
+          const product = catalog.find((entry) => entry.id === productId);
+          if (!product || product.stock <= 0) return current;
           const existing = current.find((line) => line.productId === productId);
           if (existing) {
             return current.map((line) =>
-              line.productId === productId ? { ...line, quantity: line.quantity + quantity } : line,
+              line.productId === productId ? { ...line, quantity: Math.min(product.stock, line.quantity + quantity) } : line,
             );
           }
-          return [...current, { productId, quantity }];
+          return [...current, { productId, quantity: Math.min(product.stock, quantity) }];
         });
       },
       updateQuantity: (productId, quantity) => {
+        const product = catalog.find((entry) => entry.id === productId);
         setLines((current) =>
-          current.map((line) => (line.productId === productId ? { ...line, quantity: Math.max(1, quantity) } : line)),
+          current.map((line) =>
+            line.productId === productId
+              ? { ...line, quantity: Math.max(1, Math.min(product?.stock ?? quantity, quantity)) }
+              : line,
+          ),
         );
       },
       removeFromCart: (productId) => setLines((current) => current.filter((line) => line.productId !== productId)),
       clearCart: () => setLines([]),
     }),
-    [lines, products],
+    [catalog, lines, products],
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

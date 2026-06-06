@@ -28,9 +28,15 @@ export default function ProductDetailPage() {
   }
 
   const handleAdd = () => {
+    if (product.stock <= 0) {
+      toast.error("Ce produit est en rupture de stock");
+      return;
+    }
     addToCart(product.id, quantity);
     toast.success("Produit ajouté au panier");
   };
+
+  const gallery = product.images.length > 0 ? product.images : [product.imageUrl];
 
   return (
     <div className="mx-auto w-full max-w-7xl overflow-x-hidden px-4 py-6 md:py-8">
@@ -38,14 +44,14 @@ export default function ProductDetailPage() {
         <section className="min-w-0">
           <div className="mx-auto max-w-md overflow-hidden rounded-3xl bg-pink-50 lg:max-w-none">
             <SafeImage
-              src={product.images[activeImage]}
+              src={gallery[activeImage] ?? gallery[0]}
               alt={product.name}
               fallbackLabel={product.name}
               className="aspect-square w-full object-cover"
             />
           </div>
           <div className="mx-auto mt-4 grid max-w-md grid-cols-4 gap-2 sm:gap-3 lg:max-w-none">
-            {product.images.map((image, index) => (
+            {gallery.map((image, index) => (
               <button
                 key={`${image}-${index}`}
                 type="button"
@@ -67,6 +73,15 @@ export default function ProductDetailPage() {
             {product.oldPrice ? <span className="text-lg font-bold text-gray-400 line-through">{formatDzd(product.oldPrice)}</span> : null}
           </div>
           <p className="mt-6 max-w-xl text-base leading-8 text-gray-600">{product.description}</p>
+          <div className="mt-4">
+            {product.stock > 0 ? (
+              <span className="rounded-full bg-emerald-50 px-3 py-1.5 text-sm font-bold text-emerald-700">
+                {product.stock} en stock
+              </span>
+            ) : (
+              <span className="rounded-full bg-red-50 px-3 py-1.5 text-sm font-bold text-red-700">Rupture de stock</span>
+            )}
+          </div>
 
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <div className="flex h-11 items-center rounded-full border border-pink-100 bg-white">
@@ -74,13 +89,18 @@ export default function ProductDetailPage() {
                 <Minus className="h-4 w-4" />
               </button>
               <span className="w-8 text-center text-sm font-bold">{quantity}</span>
-              <button type="button" onClick={() => setQuantity(quantity + 1)} className="px-4 text-pink-700">
+              <button
+                type="button"
+                disabled={quantity >= product.stock}
+                onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
+                className="px-4 text-pink-700 disabled:cursor-not-allowed disabled:opacity-30"
+              >
                 <Plus className="h-4 w-4" />
               </button>
             </div>
-            <Button onClick={handleAdd} className="h-11 flex-1 rounded-full bg-pink-600 px-5 hover:bg-pink-700 sm:flex-none sm:px-6">
+            <Button disabled={product.stock <= 0} onClick={handleAdd} className="h-11 flex-1 rounded-full bg-pink-600 px-5 hover:bg-pink-700 sm:flex-none sm:px-6">
               <ShoppingBag className="h-4 w-4" />
-              Ajouter au panier
+              {product.stock > 0 ? "Ajouter au panier" : "Indisponible"}
             </Button>
             <Button asChild variant="outline" className="h-11 rounded-full border-pink-200 px-5 text-pink-700">
               <Link to="/wishlist"><Heart className="h-4 w-4" /> Avis</Link>

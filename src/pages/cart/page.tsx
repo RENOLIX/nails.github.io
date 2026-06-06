@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Gift, Minus, Plus, Send, ShoppingBag, Trash2 } from "lucide-react";
+import { CheckCircle2, Gift, Minus, Plus, Send, ShoppingBag, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button.tsx";
@@ -19,6 +19,8 @@ export default function CartPage() {
   const [address, setAddress] = useState("");
   const [note, setNote] = useState("");
   const [deliveryMethod, setDeliveryMethod] = useState<"domicile" | "bureau">("domicile");
+  const [submitting, setSubmitting] = useState(false);
+  const [orderSent, setOrderSent] = useState(false);
 
   const shipping = useMemo(() => (wilaya ? DELIVERY_FEES[deliveryMethod] : 0), [deliveryMethod, wilaya]);
   const orderTotal = total + shipping;
@@ -34,6 +36,13 @@ export default function CartPage() {
       return;
     }
 
+    const unavailable = products.find(({ product, quantity }) => product.stock <= 0 || quantity > product.stock);
+    if (unavailable) {
+      toast.error(`Stock insuffisant pour ${unavailable.product.name}.`);
+      return;
+    }
+
+    setSubmitting(true);
     try {
       await createOrder({
         customer_name: name.trim(),
@@ -54,15 +63,15 @@ export default function CartPage() {
           total: product.price * quantity,
         })),
       });
+      clearCart();
+      setOrderSent(true);
+      toast.success("Commande envoyée à Nailsy Magic");
     } catch (error) {
       console.warn("Supabase order save failed", error);
+      toast.error("La commande n'a pas été envoyée. Réessayez.");
+    } finally {
+      setSubmitting(false);
     }
-
-    const lines = products.map(({ product, quantity }) => `- ${product.name} x${quantity}: ${formatDzd(product.price * quantity)}`).join("%0A");
-    const message = `Bonjour Nailsy Magic,%0AJe veux confirmer cette commande:%0A${lines}%0A%0ANom: ${encodeURIComponent(name)}%0ATelephone: ${encodeURIComponent(phone)}%0AWilaya: ${encodeURIComponent(wilaya)}%0ALivraison: ${deliveryMethod}%0AAdresse: ${encodeURIComponent(address)}%0ANote: ${encodeURIComponent(note || "-")}%0ATotal: ${encodeURIComponent(formatDzd(orderTotal))}`;
-    window.open(`https://wa.me/213550000000?text=${message}`, "_blank", "noopener,noreferrer");
-    toast.success("Commande préparée sur WhatsApp");
-    clearCart();
   };
 
   return (
@@ -100,7 +109,12 @@ export default function CartPage() {
                           <Minus className="h-3.5 w-3.5" />
                         </button>
                         <span className="w-7 text-center text-sm font-bold">{quantity}</span>
-                        <button type="button" onClick={() => updateQuantity(product.id, quantity + 1)} className="px-3">
+                        <button
+                          type="button"
+                          disabled={quantity >= product.stock}
+                          onClick={() => updateQuantity(product.id, Math.min(product.stock, quantity + 1))}
+                          className="px-3 disabled:cursor-not-allowed disabled:opacity-30"
+                        >
                           <Plus className="h-3.5 w-3.5" />
                         </button>
                       </div>
@@ -117,6 +131,18 @@ export default function CartPage() {
 
         <section className="rounded-3xl bg-white p-5 shadow-[0_24px_80px_-55px_rgba(219,39,119,0.55)] md:p-8">
           <h2 className="text-center text-2xl font-extrabold text-pink-600">Confirmer la commande</h2>
+          {orderSent ? (
+            <div className="mt-6 rounded-2xl border border-emerald-100 bg-emerald-50 p-6 text-center">
+              <CheckCircle2 className="mx-auto h-10 w-10 text-emerald-600" />
+              <p className="mt-3 text-lg font-extrabold text-emerald-900">Commande bien reçue</p>
+              <p className="mt-2 text-sm leading-6 text-emerald-700">
+                Elle est maintenant visible dans l'administration. Nous vous contacterons pour la confirmation.
+              </p>
+              <Button asChild className="mt-5 rounded-full bg-emerald-700 hover:bg-emerald-800">
+                <Link to="/products">Continuer mes achats</Link>
+              </Button>
+            </div>
+          ) : (
           <form className="mt-6 space-y-4" onSubmit={submitOrder}>
             <div className="grid gap-4 md:grid-cols-2">
               <Input value={name} onChange={(event) => setName(event.target.value)} placeholder="Nom et prénom" />
@@ -164,11 +190,12 @@ export default function CartPage() {
               Total: {formatDzd(orderTotal)}
             </div>
 
-            <Button className="h-12 w-full rounded-full bg-pink-600 hover:bg-pink-700">
+            <Button type="submit" disabled={submitting} className="h-12 w-full rounded-full bg-pink-600 hover:bg-pink-700">
               <Send className="h-4 w-4" />
-              Confirmer sur WhatsApp
+              {submitting ? "Envoi en cours..." : "Envoyer la commande"}
             </Button>
           </form>
+          )}
         </section>
       </div>
     </div>

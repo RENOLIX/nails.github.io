@@ -29,6 +29,7 @@ create table if not exists public.products (
   old_price numeric,
   image_url text,
   images jsonb not null default '[]'::jsonb,
+  stock integer not null default 20 check (stock >= 0),
   is_best_seller boolean not null default false,
   is_new boolean not null default false,
   active boolean not null default true,
@@ -50,6 +51,15 @@ create table if not exists public.orders (
   status text not null default 'new',
   created_at timestamptz not null default now()
 );
+
+alter table public.products add column if not exists stock integer not null default 20;
+update public.products set stock = 20 where stock is null;
+update public.orders set status = 'pending' where status = 'new';
+update public.orders set status = 'pending' where status not in ('pending', 'confirmed', 'cancelled');
+
+alter table public.orders drop constraint if exists orders_status_check;
+alter table public.orders
+  add constraint orders_status_check check (status in ('pending', 'confirmed', 'cancelled'));
 
 create table if not exists public.reviews (
   id uuid primary key default gen_random_uuid(),
@@ -221,6 +231,7 @@ begin
     old_price,
     image_url,
     images,
+    stock,
     is_best_seller,
     is_new,
     active
@@ -235,6 +246,7 @@ begin
     nullif(product->>'old_price', '')::numeric,
     nullif(product->>'image_url', ''),
     coalesce(product->'images', '[]'::jsonb),
+    greatest(coalesce((product->>'stock')::integer, 0), 0),
     coalesce((product->>'is_best_seller')::boolean, false),
     coalesce((product->>'is_new')::boolean, false),
     true
@@ -285,6 +297,7 @@ begin
     old_price = nullif(product->>'old_price', '')::numeric,
     image_url = nullif(product->>'image_url', ''),
     images = coalesce(product->'images', '[]'::jsonb),
+    stock = greatest(coalesce((product->>'stock')::integer, 0), 0),
     is_best_seller = coalesce((product->>'is_best_seller')::boolean, false),
     is_new = coalesce((product->>'is_new')::boolean, false),
     active = true
@@ -296,6 +309,113 @@ begin
   end if;
 
   return to_jsonb(updated);
+end;
+$$;
+
+create or replace function public.admin_update_order(session_token text, order_id uuid, order_data jsonb)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public, extensions
+as $$
+declare
+  account public.admin_users;
+  updated public.orders;
+  next_status text;
+begin
+  account := public.private_admin_from_token(session_token);
+  next_status := coalesce(nullif(order_data->>'status', ''), 'pending');
+
+  if next_status not in ('pending', 'confirmed', 'cancelled') then
+    raise exception 'Invalid order status';
+  end if;
+
+  update public.orders
+  set
+    customer_name = coalesce(nullif(order_data->>'customer_name', ''), customer_name),
+    customer_phone = coalesce(nullif(order_data->>'customer_phone', ''), customer_phone),
+    wilaya = nullif(order_data->>'wilaya', ''),
+    address = nullif(order_data->>'address', ''),
+    delivery_method = coalesce(nullif(order_data->>'delivery_method', ''), delivery_method),
+    note = nullif(order_data->>'note', ''),
+    status = next_status
+  where orders.id = order_id
+  returning * into updated;
+
+  if updated.id is null then
+    raise exception 'Order not found';
+  end if;
+
+  return to_jsonb(updated);
+end;
+$$;
+
+create or replace function public.create_public_order(order_data jsonb)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public, extensions
+as $$
+declare
+  inserted public.orders;
+  item jsonb;
+  matched_product public.products;
+  requested_quantity integer;
+begin
+  for item in select * from jsonb_array_elements(coalesce(order_data->'items', '[]'::jsonb))
+  loop
+    matched_product := null;
+    requested_quantity := greatest(coalesce((item->>'quantity')::integer, 1), 1);
+    select *
+      into matched_product
+    from public.products
+    where id::text = item->>'id'
+      and active = true
+    for update;
+
+    if matched_product.id is not null and matched_product.stock < requested_quantity then
+      raise exception 'Stock insuffisant pour %', matched_product.name;
+    end if;
+  end loop;
+
+  insert into public.orders (
+    customer_name,
+    customer_phone,
+    wilaya,
+    address,
+    delivery_method,
+    note,
+    items,
+    subtotal,
+    shipping,
+    total,
+    status
+  )
+  values (
+    order_data->>'customer_name',
+    order_data->>'customer_phone',
+    nullif(order_data->>'wilaya', ''),
+    nullif(order_data->>'address', ''),
+    nullif(order_data->>'delivery_method', ''),
+    nullif(order_data->>'note', ''),
+    coalesce(order_data->'items', '[]'::jsonb),
+    coalesce((order_data->>'subtotal')::numeric, 0),
+    coalesce((order_data->>'shipping')::numeric, 0),
+    coalesce((order_data->>'total')::numeric, 0),
+    'pending'
+  )
+  returning * into inserted;
+
+  for item in select * from jsonb_array_elements(coalesce(order_data->'items', '[]'::jsonb))
+  loop
+    requested_quantity := greatest(coalesce((item->>'quantity')::integer, 1), 1);
+    update public.products
+    set stock = greatest(stock - requested_quantity, 0)
+    where id::text = item->>'id'
+      and active = true;
+  end loop;
+
+  return to_jsonb(inserted);
 end;
 $$;
 
@@ -366,9 +486,11 @@ grant execute on function public.admin_login(text, text) to anon;
 grant execute on function public.admin_dashboard_data(text) to anon;
 grant execute on function public.admin_create_product(text, jsonb) to anon;
 grant execute on function public.admin_update_product(text, uuid, jsonb) to anon;
+grant execute on function public.admin_update_order(text, uuid, jsonb) to anon;
 grant execute on function public.admin_delete_product(text, uuid) to anon;
 grant execute on function public.admin_create_user(text, text, text, text, text) to anon;
 grant execute on function public.admin_delete_user(text, uuid) to anon;
+grant execute on function public.create_public_order(jsonb) to anon;
 
 insert into public.admin_users (email, name, role, password_hash, active)
 values (
