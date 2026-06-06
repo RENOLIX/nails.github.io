@@ -1,5 +1,4 @@
 "use client";
-import { Link } from "react-router-dom";
 import { motion } from "motion/react";
 
 const HERO_IMAGE = `${import.meta.env.BASE_URL}images/dvok-glace-individual.webp`;
@@ -14,7 +13,7 @@ export default function Hero() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.65, ease: "easeOut" }}
       >
-        <Link to="/products/vernis">
+        <a href="#categories" aria-label="Voir les catégories" className="block cursor-pointer">
           <picture>
             <source media="(max-width: 767px)" srcSet={HERO_MOBILE_IMAGE} />
             <img
@@ -23,7 +22,7 @@ export default function Hero() {
               className="block h-auto w-full object-cover"
             />
           </picture>
-        </Link>
+        </a>
       </motion.div>
     </section>
   );

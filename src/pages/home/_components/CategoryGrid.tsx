@@ -9,7 +9,7 @@ export default function CategoryGrid() {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
 
   return (
-    <section className="mx-auto max-w-7xl px-4 py-12">
+    <section id="categories" className="mx-auto max-w-7xl scroll-mt-24 px-4 py-12">
       <div className="mb-8 text-center">
         <h2 className="text-2xl font-extrabold text-gray-950 md:text-3xl">Catégories</h2>
       </div>
