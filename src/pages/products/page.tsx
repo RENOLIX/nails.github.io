@@ -6,10 +6,11 @@ import { CATEGORIES } from "@/lib/categories.ts";
 import { CANNI_COLLECTIONS } from "@/lib/product-options.ts";
 import { findCategoryLabel } from "@/lib/products.ts";
 import { useProducts } from "@/components/providers/products.tsx";
+import { Skeleton } from "@/components/ui/skeleton.tsx";
 
 export default function ProductsPage() {
   const { category, subcategory, collection } = useParams();
-  const { products: catalog } = useProducts();
+  const { products: catalog, loading } = useProducts();
   const currentCategory = CATEGORIES.find((entry) => entry.id === category);
   const currentSubcategory = currentCategory?.subcategories.find((entry) => entry.id === subcategory);
   const currentCollection = CANNI_COLLECTIONS.find((entry) => entry.id === collection);
@@ -27,6 +28,20 @@ export default function ProductsPage() {
     : category
       ? `${findCategoryLabel(category)}${currentSubcategory ? ` — ${currentSubcategory.label}` : ""}`
       : "Tous les produits";
+
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-7xl px-4 py-8">
+        <Skeleton className="h-10 w-64" />
+        <Skeleton className="mt-3 h-5 w-32" />
+        <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+          {Array.from({ length: 8 }).map((_, index) => (
+            <Skeleton key={index} className="aspect-square rounded-2xl" />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   if (!category) {
     return (

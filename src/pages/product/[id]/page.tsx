@@ -7,15 +7,45 @@ import { formatDzd } from "@/lib/utils.ts";
 import { useCart } from "@/components/providers/cart";
 import SafeImage from "@/components/SafeImage.tsx";
 import { useProducts } from "@/components/providers/products.tsx";
+import { Skeleton } from "@/components/ui/skeleton.tsx";
 
 export default function ProductDetailPage() {
   const { id } = useParams();
-  const { products } = useProducts();
+  const { products, loading } = useProducts();
   const product = useMemo(() => products.find((entry) => entry.id === id), [id, products]);
   const [activeImage, setActiveImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [selectedColor, setSelectedColor] = useState("");
   const { addToCart } = useCart();
+
+  if (loading) {
+    return (
+      <div className="mx-auto w-full max-w-7xl px-4 py-6 md:py-8">
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,0.85fr)] lg:gap-10">
+          <div>
+            <Skeleton className="aspect-square w-full rounded-3xl" />
+            <div className="mt-4 grid grid-cols-4 gap-3">
+              {Array.from({ length: 4 }).map((_, index) => (
+                <Skeleton key={index} className="aspect-square rounded-2xl" />
+              ))}
+            </div>
+          </div>
+          <div className="space-y-5 pt-2">
+            <Skeleton className="h-4 w-36" />
+            <Skeleton className="h-12 w-3/4" />
+            <Skeleton className="h-5 w-24" />
+            <Skeleton className="h-9 w-36" />
+            <Skeleton className="h-24 w-full" />
+            <div className="flex gap-3">
+              <Skeleton className="h-11 w-28 rounded-xl" />
+              <Skeleton className="h-11 w-28 rounded-xl" />
+              <Skeleton className="h-11 w-28 rounded-xl" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!product) {
     return (
