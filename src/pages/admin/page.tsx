@@ -22,6 +22,11 @@ import { Button } from "@/components/ui/button.tsx";
 import { Input } from "@/components/ui/input.tsx";
 import { Textarea } from "@/components/ui/textarea.tsx";
 import { CATEGORIES } from "@/lib/categories.ts";
+import {
+  CANNI_COLLECTIONS,
+  resolveProductColor,
+  type ProductColor,
+} from "@/lib/product-options.ts";
 import { formatDzd } from "@/lib/utils.ts";
 import SafeImage from "@/components/SafeImage.tsx";
 import { NAILSY_LOGO } from "@/lib/assets.ts";
@@ -222,10 +227,13 @@ export default function AdminPage() {
     old_price: "",
     images: [] as string[],
     stock: "20",
+    canni_collection: "",
+    colors: [] as ProductColor[],
     description: "",
     is_best_seller: false,
     is_new: true,
   });
+  const [colorInput, setColorInput] = useState("");
   const [userForm, setUserForm] = useState({
     name: "",
     email: "",
@@ -269,6 +277,7 @@ export default function AdminPage() {
 
   const resetProductForm = () => {
     setEditingProductId(null);
+    setColorInput("");
     setProductForm({
       name: "",
       reference: "",
@@ -278,6 +287,8 @@ export default function AdminPage() {
       old_price: "",
       images: [],
       stock: "20",
+      canni_collection: "",
+      colors: [],
       description: "",
       is_best_seller: false,
       is_new: true,
@@ -295,6 +306,8 @@ export default function AdminPage() {
       old_price: product.old_price ? String(product.old_price) : "",
       images: product.images?.length ? product.images : product.image_url ? [product.image_url] : [],
       stock: String(product.stock ?? 20),
+      canni_collection: product.canni_collection ?? "",
+      colors: product.colors ?? [],
       description: product.description ?? "",
       is_best_seller: product.is_best_seller,
       is_new: product.is_new,
@@ -309,6 +322,10 @@ export default function AdminPage() {
       toast.error("Nom, catégorie et prix sont obligatoires.");
       return;
     }
+    if (productForm.category === "vernis" && productForm.subcategory === "canni" && !productForm.canni_collection) {
+      toast.error("Choisissez une collection Canni entre CC1 et CC8.");
+      return;
+    }
     try {
       const payload = {
         name: productForm.name.trim(),
@@ -320,6 +337,11 @@ export default function AdminPage() {
         image_url: productForm.images[0] ?? "",
         images: productForm.images,
         stock: Math.max(0, Number(productForm.stock) || 0),
+        canni_collection:
+          productForm.category === "vernis" && productForm.subcategory === "canni"
+            ? productForm.canni_collection
+            : "",
+        colors: productForm.colors,
         description: productForm.description.trim(),
         is_best_seller: productForm.is_best_seller,
         is_new: productForm.is_new,
@@ -361,6 +383,20 @@ export default function AdminPage() {
     } catch {
       toast.error("Impossible de préparer une des images.");
     }
+  };
+
+  const addProductColor = () => {
+    const name = colorInput.trim();
+    if (!name) return;
+    if (productForm.colors.some((color) => color.name.toLowerCase() === name.toLowerCase())) {
+      toast.error("Cette couleur est déjà ajoutée.");
+      return;
+    }
+    setProductForm((current) => ({
+      ...current,
+      colors: [...current.colors, { name, value: resolveProductColor(name) }],
+    }));
+    setColorInput("");
   };
 
   const removeProduct = async (productId: string) => {
@@ -559,6 +595,8 @@ export default function AdminPage() {
                             <div className="flex flex-wrap gap-2">
                               {product.is_new && <Tag>Nouveau</Tag>}
                               {product.is_best_seller && <Tag>Best</Tag>}
+                              {product.canni_collection && <Tag>{product.canni_collection.toUpperCase()}</Tag>}
+                              {product.colors?.length > 0 && <Tag>{product.colors.length} couleur{product.colors.length > 1 ? "s" : ""}</Tag>}
                               {!product.active && <Tag>Inactif</Tag>}
                             </div>
                           </td>
@@ -643,12 +681,96 @@ export default function AdminPage() {
                     <Input value={productForm.stock} onChange={(event) => setProductForm({ ...productForm, stock: event.target.value })} type="number" min="0" inputMode="numeric" placeholder="Stock disponible" />
                   </div>
                   <div className="grid gap-3 sm:grid-cols-2">
-                    <select value={productForm.category} onChange={(event) => setProductForm({ ...productForm, category: event.target.value })} className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm">
+                    <select
+                      value={productForm.category}
+                      onChange={(event) =>
+                        setProductForm({
+                          ...productForm,
+                          category: event.target.value,
+                          subcategory: "",
+                          canni_collection: "",
+                        })
+                      }
+                      className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm"
+                    >
                       {CATEGORIES.map((category) => <option key={category.id} value={category.id}>{category.label}</option>)}
                     </select>
-                    <Input value={productForm.subcategory} onChange={(event) => setProductForm({ ...productForm, subcategory: event.target.value })} placeholder="Sous-catégorie" />
+                    {CATEGORIES.find((category) => category.id === productForm.category)?.subcategories.length ? (
+                      <select
+                        value={productForm.subcategory}
+                        onChange={(event) => setProductForm({ ...productForm, subcategory: event.target.value, canni_collection: "" })}
+                        className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm"
+                      >
+                        <option value="">Choisir la sous-catégorie</option>
+                        {CATEGORIES.find((category) => category.id === productForm.category)?.subcategories.map((subcategory) => (
+                          <option key={subcategory.id} value={subcategory.id}>{subcategory.label}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <Input value={productForm.subcategory} onChange={(event) => setProductForm({ ...productForm, subcategory: event.target.value })} placeholder="Sous-catégorie optionnelle" />
+                    )}
                   </div>
+                  {productForm.category === "vernis" && productForm.subcategory === "canni" && (
+                    <div className="rounded-2xl border border-pink-100 bg-pink-50/60 p-4">
+                      <label className="mb-2 block text-xs font-black uppercase tracking-[0.16em] text-pink-600">Collection Canni</label>
+                      <select
+                        value={productForm.canni_collection}
+                        onChange={(event) => setProductForm({ ...productForm, canni_collection: event.target.value })}
+                        className="h-11 w-full rounded-xl border border-pink-200 bg-white px-3 text-sm font-bold"
+                      >
+                        <option value="">Choisir CC1 à CC8</option>
+                        {CANNI_COLLECTIONS.map((collection) => (
+                          <option key={collection.id} value={collection.id}>{collection.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
                   <Textarea value={productForm.description} onChange={(event) => setProductForm({ ...productForm, description: event.target.value })} placeholder="Description produit" />
+                  <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+                    <div className="mb-3">
+                      <p className="font-black text-slate-950">Couleurs disponibles</p>
+                      <p className="mt-1 text-xs font-semibold text-slate-500">Écrivez une couleur, par exemple rose, rouge, nude ou #d946ef.</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <div
+                        className="h-11 w-11 shrink-0 rounded-xl border border-slate-200 shadow-inner"
+                        style={{ backgroundColor: resolveProductColor(colorInput) }}
+                      />
+                      <Input
+                        value={colorInput}
+                        onChange={(event) => setColorInput(event.target.value)}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter") {
+                            event.preventDefault();
+                            addProductColor();
+                          }
+                        }}
+                        placeholder="Nom ou code couleur"
+                      />
+                      <Button type="button" variant="outline" onClick={addProductColor} className="h-11 shrink-0 rounded-xl">
+                        <Plus className="h-4 w-4" />
+                        Ajouter
+                      </Button>
+                    </div>
+                    {productForm.colors.length > 0 && (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {productForm.colors.map((color, index) => (
+                          <div key={`${color.name}-${index}`} className="flex items-center gap-2 rounded-full border border-slate-200 bg-white py-1 pl-1 pr-2 text-sm font-bold text-slate-700">
+                            <span className="h-7 w-7 rounded-full border border-black/10" style={{ backgroundColor: color.value }} />
+                            {color.name}
+                            <button
+                              type="button"
+                              onClick={() => setProductForm((current) => ({ ...current, colors: current.colors.filter((_, colorIndex) => colorIndex !== index) }))}
+                              className="ml-1 rounded-full p-1 text-slate-400 hover:bg-red-50 hover:text-red-600"
+                              aria-label={`Supprimer ${color.name}`}
+                            >
+                              <X className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 px-3 py-3 text-sm font-bold">
                       <input type="checkbox" checked={productForm.is_new} onChange={(event) => setProductForm({ ...productForm, is_new: event.target.checked })} />
@@ -860,6 +982,7 @@ function OrderEditor({
           <div key={`${order.id}-${index}`} className="text-sm text-slate-700">
             <span className="font-bold">{String(item.name ?? "Produit")}</span>
             <span className="text-slate-400"> x{String(item.quantity ?? 1)}</span>
+            {item.color ? <span className="ml-1 font-semibold text-pink-600">· {String(item.color)}</span> : null}
           </div>
         ))}
       </div>

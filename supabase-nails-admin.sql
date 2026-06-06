@@ -30,6 +30,8 @@ create table if not exists public.products (
   image_url text,
   images jsonb not null default '[]'::jsonb,
   stock integer not null default 20 check (stock >= 0),
+  canni_collection text,
+  colors jsonb not null default '[]'::jsonb,
   is_best_seller boolean not null default false,
   is_new boolean not null default false,
   active boolean not null default true,
@@ -53,7 +55,20 @@ create table if not exists public.orders (
 );
 
 alter table public.products add column if not exists stock integer not null default 20;
+alter table public.products add column if not exists canni_collection text;
+alter table public.products add column if not exists colors jsonb not null default '[]'::jsonb;
 update public.products set stock = 20 where stock is null;
+update public.products
+set canni_collection = lower(reference)
+where category = 'vernis'
+  and subcategory = 'canni'
+  and upper(reference) in ('CC1', 'CC2', 'CC3', 'CC4', 'CC5', 'CC6', 'CC7', 'CC8')
+  and canni_collection is null;
+
+alter table public.products drop constraint if exists products_canni_collection_check;
+alter table public.products
+  add constraint products_canni_collection_check
+  check (canni_collection is null or canni_collection in ('cc1', 'cc2', 'cc3', 'cc4', 'cc5', 'cc6', 'cc7', 'cc8'));
 update public.orders set status = 'pending' where status = 'new';
 update public.orders set status = 'pending' where status not in ('pending', 'confirmed', 'cancelled');
 
@@ -232,6 +247,8 @@ begin
     image_url,
     images,
     stock,
+    canni_collection,
+    colors,
     is_best_seller,
     is_new,
     active
@@ -247,6 +264,8 @@ begin
     nullif(product->>'image_url', ''),
     coalesce(product->'images', '[]'::jsonb),
     greatest(coalesce((product->>'stock')::integer, 0), 0),
+    nullif(product->>'canni_collection', ''),
+    coalesce(product->'colors', '[]'::jsonb),
     coalesce((product->>'is_best_seller')::boolean, false),
     coalesce((product->>'is_new')::boolean, false),
     true
@@ -298,6 +317,8 @@ begin
     image_url = nullif(product->>'image_url', ''),
     images = coalesce(product->'images', '[]'::jsonb),
     stock = greatest(coalesce((product->>'stock')::integer, 0), 0),
+    canni_collection = nullif(product->>'canni_collection', ''),
+    colors = coalesce(product->'colors', '[]'::jsonb),
     is_best_seller = coalesce((product->>'is_best_seller')::boolean, false),
     is_new = coalesce((product->>'is_new')::boolean, false),
     active = true
@@ -491,6 +512,44 @@ grant execute on function public.admin_delete_product(text, uuid) to anon;
 grant execute on function public.admin_create_user(text, text, text, text, text) to anon;
 grant execute on function public.admin_delete_user(text, uuid) to anon;
 grant execute on function public.create_public_order(jsonb) to anon;
+
+insert into public.products (
+  name,
+  reference,
+  description,
+  category,
+  subcategory,
+  price,
+  image_url,
+  images,
+  stock,
+  canni_collection,
+  colors,
+  is_best_seller,
+  is_new,
+  active
+)
+select
+  'Vernis Canni CC' || collection_number,
+  'CC' || collection_number,
+  'Collection Canni CC' || collection_number || ' disponible dans plusieurs couleurs.',
+  'vernis',
+  'canni',
+  850,
+  'https://renolix.github.io/nails.github.io/images/canni/cc' || collection_number || '.webp',
+  jsonb_build_array('https://renolix.github.io/nails.github.io/images/canni/cc' || collection_number || '.webp'),
+  20,
+  'cc' || collection_number,
+  '[]'::jsonb,
+  false,
+  collection_number = 8,
+  true
+from generate_series(1, 8) as seed(collection_number)
+where not exists (
+  select 1
+  from public.products
+  where canni_collection = 'cc' || collection_number
+);
 
 insert into public.admin_users (email, name, role, password_hash, active)
 values (

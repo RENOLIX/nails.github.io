@@ -6,6 +6,8 @@ public/images/*
 !public/images/nailsy-logo.png
 !public/images/categories/
 !public/images/categories/**
+!public/images/canni/
+!public/images/canni/**
 !public/images/about/
 public/images/about/*
 !public/images/about/nailsy-mascot.jpeg

@@ -1,4 +1,5 @@
 import { CATEGORIES } from "./categories";
+import type { ProductColor } from "./product-options";
 
 export type Product = {
   id: string;
@@ -12,6 +13,8 @@ export type Product = {
   imageUrl: string;
   images: string[];
   stock: number;
+  canniCollection?: string;
+  colors: ProductColor[];
   isBestSeller?: boolean;
   isNew?: boolean;
 };
@@ -29,6 +32,9 @@ const images = {
   emballage: "https://hercules-cdn.com/file_eL3rYeVaw8CPArGodwBLRiwk",
 };
 
+const canniImage = (collection: string) =>
+  `${import.meta.env.BASE_URL}images/canni/${collection}.webp`;
+
 export const PRODUCTS: Product[] = [
   {
     id: "canni-cc1",
@@ -39,9 +45,15 @@ export const PRODUCTS: Product[] = [
     subcategory: "canni",
     price: 850,
     oldPrice: 1000,
-    imageUrl: images.vernis,
-    images: [images.vernis, images.coats, images.gels],
+    imageUrl: canniImage("cc1"),
+    images: [canniImage("cc1")],
     stock: 20,
+    canniCollection: "cc1",
+    colors: [
+      { name: "Rouge", value: "#ef4444" },
+      { name: "Bleu", value: "#2563eb" },
+      { name: "Rose", value: "#ec4899" },
+    ],
     isBestSeller: true,
   },
   {
@@ -52,9 +64,15 @@ export const PRODUCTS: Product[] = [
     category: "vernis",
     subcategory: "canni",
     price: 850,
-    imageUrl: images.vernis,
-    images: [images.vernis, images.coats],
+    imageUrl: canniImage("cc2"),
+    images: [canniImage("cc2")],
     stock: 20,
+    canniCollection: "cc2",
+    colors: [
+      { name: "Nude", value: "#d9a38f" },
+      { name: "Lilas", value: "#c4b5fd" },
+      { name: "Vert", value: "#22c55e" },
+    ],
     isNew: true,
   },
   {
@@ -65,9 +83,15 @@ export const PRODUCTS: Product[] = [
     category: "vernis",
     subcategory: "canni",
     price: 850,
-    imageUrl: images.vernis,
-    images: [images.vernis, images.gels],
+    imageUrl: canniImage("cc5"),
+    images: [canniImage("cc5")],
     stock: 20,
+    canniCollection: "cc5",
+    colors: [
+      { name: "Bordeaux", value: "#7f1d3f" },
+      { name: "Corail", value: "#ff7f6a" },
+      { name: "Rose", value: "#ec4899" },
+    ],
   },
   {
     id: "canni-cc7",
@@ -77,10 +101,89 @@ export const PRODUCTS: Product[] = [
     category: "vernis",
     subcategory: "canni",
     price: 850,
-    imageUrl: images.vernis,
-    images: [images.vernis, images.decoration],
+    imageUrl: canniImage("cc7"),
+    images: [canniImage("cc7")],
     stock: 20,
+    canniCollection: "cc7",
+    colors: [
+      { name: "Blanc", value: "#ffffff" },
+      { name: "Beige", value: "#e8d5c4" },
+      { name: "Rose pale", value: "#f8cbd5" },
+    ],
     isBestSeller: true,
+  },
+  {
+    id: "canni-cc3",
+    name: "Vernis Canni CC3",
+    reference: "CC3",
+    description: "Collection Canni CC3 aux teintes nude, terre et élégantes pour des poses naturelles.",
+    category: "vernis",
+    subcategory: "canni",
+    price: 850,
+    imageUrl: canniImage("cc3"),
+    images: [canniImage("cc3")],
+    stock: 20,
+    canniCollection: "cc3",
+    colors: [
+      { name: "Nude", value: "#d9a38f" },
+      { name: "Marron", value: "#8b5e3c" },
+      { name: "Beige", value: "#e8d5c4" },
+    ],
+  },
+  {
+    id: "canni-cc4",
+    name: "Vernis Canni CC4",
+    reference: "CC4",
+    description: "Collection Canni CC4 vive et colorée avec des nuances violettes, jaunes et vertes.",
+    category: "vernis",
+    subcategory: "canni",
+    price: 850,
+    imageUrl: canniImage("cc4"),
+    images: [canniImage("cc4")],
+    stock: 20,
+    canniCollection: "cc4",
+    colors: [
+      { name: "Violet", value: "#8b5cf6" },
+      { name: "Jaune", value: "#facc15" },
+      { name: "Orange", value: "#f97316" },
+    ],
+  },
+  {
+    id: "canni-cc6",
+    name: "Vernis Canni CC6",
+    reference: "CC6",
+    description: "Collection Canni CC6 aux nuances brunes, dorées et profondes.",
+    category: "vernis",
+    subcategory: "canni",
+    price: 850,
+    imageUrl: canniImage("cc6"),
+    images: [canniImage("cc6")],
+    stock: 20,
+    canniCollection: "cc6",
+    colors: [
+      { name: "Brun", value: "#7c4a2d" },
+      { name: "Doré", value: "#d4a72c" },
+      { name: "Noir", value: "#111111" },
+    ],
+  },
+  {
+    id: "canni-cc8",
+    name: "Vernis Canni CC8",
+    reference: "CC8",
+    description: "Collection Canni CC8 lumineuse avec des couleurs pastel, nacrées et fraîches.",
+    category: "vernis",
+    subcategory: "canni",
+    price: 850,
+    imageUrl: canniImage("cc8"),
+    images: [canniImage("cc8")],
+    stock: 20,
+    canniCollection: "cc8",
+    colors: [
+      { name: "Turquoise", value: "#14b8a6" },
+      { name: "Rose", value: "#ec4899" },
+      { name: "Argent", value: "#c0c0c0" },
+    ],
+    isNew: true,
   },
   {
     id: "venalisa-a2",
@@ -93,6 +196,7 @@ export const PRODUCTS: Product[] = [
     imageUrl: images.vernis,
     images: [images.vernis, images.decoration],
     stock: 20,
+    colors: [],
     isNew: true,
   },
   {
@@ -106,6 +210,7 @@ export const PRODUCTS: Product[] = [
     imageUrl: images.coats,
     images: [images.coats, images.vernis],
     stock: 20,
+    colors: [],
     isBestSeller: true,
   },
   {
@@ -120,6 +225,7 @@ export const PRODUCTS: Product[] = [
     imageUrl: images.gels,
     images: [images.gels, images.capsules],
     stock: 20,
+    colors: [],
     isNew: true,
   },
   {
@@ -133,6 +239,7 @@ export const PRODUCTS: Product[] = [
     imageUrl: images.pinceau,
     images: [images.pinceau, images.decoration],
     stock: 20,
+    colors: [],
   },
   {
     id: "capsules-soft-square",
@@ -145,6 +252,7 @@ export const PRODUCTS: Product[] = [
     imageUrl: images.capsules,
     images: [images.capsules, images.glue],
     stock: 20,
+    colors: [],
     isBestSeller: true,
   },
   {
@@ -158,6 +266,7 @@ export const PRODUCTS: Product[] = [
     imageUrl: images.decoration,
     images: [images.decoration, images.vernis],
     stock: 20,
+    colors: [],
     isNew: true,
   },
   {
@@ -171,6 +280,7 @@ export const PRODUCTS: Product[] = [
     imageUrl: images.appareil,
     images: [images.appareil, images.tools],
     stock: 20,
+    colors: [],
     isBestSeller: true,
   },
   {
@@ -184,6 +294,7 @@ export const PRODUCTS: Product[] = [
     imageUrl: images.tools,
     images: [images.tools, images.pinceau],
     stock: 20,
+    colors: [],
   },
   {
     id: "nail-glue-pro",
@@ -196,6 +307,7 @@ export const PRODUCTS: Product[] = [
     imageUrl: images.glue,
     images: [images.glue, images.capsules],
     stock: 20,
+    colors: [],
   },
 ];
 

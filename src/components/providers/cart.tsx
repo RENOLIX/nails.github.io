@@ -5,14 +5,15 @@ import { useProducts } from "./products";
 export type CartLine = {
   productId: string;
   quantity: number;
+  selectedColor?: string;
 };
 
 type CartContextValue = {
   lines: CartLine[];
-  products: Array<{ product: Product; quantity: number }>;
+  products: Array<{ product: Product; quantity: number; selectedColor?: string }>;
   count: number;
   total: number;
-  addToCart: (productId: string, quantity?: number) => void;
+  addToCart: (productId: string, quantity?: number, selectedColor?: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   removeFromCart: (productId: string) => void;
   clearCart: () => void;
@@ -42,9 +43,9 @@ export function CartProvider({ children }: PropsWithChildren) {
       lines
         .map((line) => {
           const product = catalog.find((entry) => entry.id === line.productId);
-          return product ? { product, quantity: line.quantity } : null;
+          return product ? { product, quantity: line.quantity, selectedColor: line.selectedColor } : null;
         })
-        .filter(Boolean) as Array<{ product: Product; quantity: number }>,
+        .filter(Boolean) as Array<{ product: Product; quantity: number; selectedColor?: string }>,
     [lines, catalog],
   );
 
@@ -54,17 +55,19 @@ export function CartProvider({ children }: PropsWithChildren) {
       products,
       count: lines.reduce((sum, line) => sum + line.quantity, 0),
       total: products.reduce((sum, line) => sum + line.product.price * line.quantity, 0),
-      addToCart: (productId, quantity = 1) => {
+      addToCart: (productId, quantity = 1, selectedColor) => {
         setLines((current) => {
           const product = catalog.find((entry) => entry.id === productId);
           if (!product || product.stock <= 0) return current;
           const existing = current.find((line) => line.productId === productId);
           if (existing) {
             return current.map((line) =>
-              line.productId === productId ? { ...line, quantity: Math.min(product.stock, line.quantity + quantity) } : line,
+              line.productId === productId
+                ? { ...line, quantity: Math.min(product.stock, line.quantity + quantity), selectedColor }
+                : line,
             );
           }
-          return [...current, { productId, quantity: Math.min(product.stock, quantity) }];
+          return [...current, { productId, quantity: Math.min(product.stock, quantity), selectedColor }];
         });
       },
       updateQuantity: (productId, quantity) => {

@@ -14,6 +14,7 @@ export default function ProductDetailPage() {
   const product = useMemo(() => products.find((entry) => entry.id === id), [id, products]);
   const [activeImage, setActiveImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
+  const [selectedColor, setSelectedColor] = useState("");
   const { addToCart } = useCart();
 
   if (!product) {
@@ -32,7 +33,8 @@ export default function ProductDetailPage() {
       toast.error("Ce produit est en rupture de stock");
       return;
     }
-    addToCart(product.id, quantity);
+    const color = selectedColor || product.colors[0]?.name;
+    addToCart(product.id, quantity, color);
     toast.success("Produit ajouté au panier");
   };
 
@@ -82,6 +84,35 @@ export default function ProductDetailPage() {
               <span className="rounded-full bg-red-50 px-3 py-1.5 text-sm font-bold text-red-700">Rupture de stock</span>
             )}
           </div>
+
+          {product.colors.length > 0 && (
+            <div className="mt-6">
+              <p className="text-sm font-extrabold text-slate-950">
+                Couleur: <span className="text-pink-600">{selectedColor || product.colors[0].name}</span>
+              </p>
+              <div className="mt-3 flex flex-wrap gap-3">
+                {product.colors.map((color) => {
+                  const active = (selectedColor || product.colors[0].name) === color.name;
+                  return (
+                    <button
+                      key={`${color.name}-${color.value}`}
+                      type="button"
+                      onClick={() => setSelectedColor(color.name)}
+                      className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-bold transition ${
+                        active ? "border-pink-500 bg-pink-50 text-pink-700" : "border-slate-200 bg-white text-slate-700"
+                      }`}
+                    >
+                      <span
+                        className="h-6 w-6 rounded-md border border-black/10 shadow-inner"
+                        style={{ backgroundColor: color.value }}
+                      />
+                      {color.name}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <div className="flex h-11 items-center rounded-full border border-pink-100 bg-white">

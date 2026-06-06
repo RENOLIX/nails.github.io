@@ -1,4 +1,5 @@
 import { PRODUCTS, type Product } from "@/lib/products.ts";
+import type { ProductColor } from "@/lib/product-options.ts";
 
 const SUPABASE_REST_URL = "https://ecjvcilxbwpnliibgybv.supabase.co/rest/v1";
 const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_TTKdey8dP35cIr-NsiYTZg_VJM9httB";
@@ -79,6 +80,8 @@ export type AdminProduct = {
   image_url: string | null;
   images: string[];
   stock: number;
+  canni_collection: string | null;
+  colors: ProductColor[];
   is_best_seller: boolean;
   is_new: boolean;
   active: boolean;
@@ -150,6 +153,8 @@ export type ProductInput = {
   image_url?: string;
   images?: string[];
   stock: number;
+  canni_collection?: string;
+  colors?: ProductColor[];
   is_best_seller?: boolean;
   is_new?: boolean;
 };
@@ -167,6 +172,10 @@ function adminProductToProduct(product: AdminProduct): Product {
     imageUrl: product.image_url ?? "",
     images: product.images?.length ? product.images : product.image_url ? [product.image_url] : [],
     stock: Number(product.stock ?? 20),
+    canniCollection:
+      product.canni_collection ??
+      (/^CC[1-8]$/i.test(product.reference ?? "") ? product.reference?.toLowerCase() : undefined),
+    colors: Array.isArray(product.colors) ? product.colors : [],
     isBestSeller: product.is_best_seller,
     isNew: product.is_new,
   };
@@ -185,6 +194,8 @@ function productToAdminProduct(product: Product): AdminProduct {
     image_url: product.imageUrl,
     images: product.images,
     stock: product.stock,
+    canni_collection: product.canniCollection ?? null,
+    colors: product.colors,
     is_best_seller: Boolean(product.isBestSeller),
     is_new: Boolean(product.isNew),
     active: true,
@@ -230,6 +241,10 @@ function readLocalDashboard(): AdminDashboardData {
       ...product,
       images: product.images?.length ? product.images : product.image_url ? [product.image_url] : [],
       stock: Number(product.stock ?? 20),
+      canni_collection:
+        product.canni_collection ??
+        (/^CC[1-8]$/i.test(product.reference ?? "") ? product.reference?.toLowerCase() ?? null : null),
+      colors: Array.isArray(product.colors) ? product.colors : [],
     })),
     orders: parsed.orders.map((order) => ({
       ...order,
@@ -282,6 +297,8 @@ export function adminCreateProduct(token: string, product: ProductInput) {
       image_url: product.image_url || null,
       images: product.images ?? [],
       stock: product.stock,
+      canni_collection: product.canni_collection || null,
+      colors: product.colors ?? [],
       is_best_seller: Boolean(product.is_best_seller),
       is_new: Boolean(product.is_new),
       active: true,
@@ -315,6 +332,8 @@ export function adminUpdateProduct(token: string, productId: string, product: Pr
         image_url: product.image_url || null,
         images: product.images ?? [],
         stock: product.stock,
+        canni_collection: product.canni_collection || null,
+        colors: product.colors ?? [],
         is_best_seller: Boolean(product.is_best_seller),
         is_new: Boolean(product.is_new),
         active: true,

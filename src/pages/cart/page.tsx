@@ -54,12 +54,13 @@ export default function CartPage() {
         subtotal: total,
         shipping,
         total: orderTotal,
-        items: products.map(({ product, quantity }) => ({
+        items: products.map(({ product, quantity, selectedColor }) => ({
           id: product.id,
           name: product.name,
           reference: product.reference ?? "",
           price: product.price,
           quantity,
+          color: selectedColor ?? "",
           total: product.price * quantity,
         })),
       });
@@ -97,12 +98,13 @@ export default function CartPage() {
             </div>
           ) : (
             <div className="space-y-4">
-              {products.map(({ product, quantity }) => (
+              {products.map(({ product, quantity, selectedColor }) => (
                 <div key={product.id} className="flex gap-4 rounded-2xl border border-pink-50 p-3">
                   <SafeImage src={product.imageUrl} alt={product.name} fallbackLabel={product.reference || product.name} className="h-24 w-24 rounded-2xl object-cover" />
                   <div className="min-w-0 flex-1">
                     <h3 className="truncate text-sm font-bold text-gray-950">{product.name}</h3>
                     <p className="mt-1 text-sm font-bold text-pink-600">{formatDzd(product.price)}</p>
+                    {selectedColor && <p className="mt-1 text-xs font-semibold text-slate-500">Couleur: {selectedColor}</p>}
                     <div className="mt-3 flex items-center justify-between">
                       <div className="flex h-9 items-center rounded-full border border-pink-100">
                         <button type="button" onClick={() => updateQuantity(product.id, Math.max(1, quantity - 1))} className="px-3">

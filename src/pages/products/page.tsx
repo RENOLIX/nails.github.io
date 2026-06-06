@@ -1,56 +1,77 @@
 import { Link, useParams } from "react-router-dom";
 import { ChevronRight, Filter } from "lucide-react";
 import ProductCard from "@/components/ProductCard.tsx";
+import SafeImage from "@/components/SafeImage.tsx";
 import { CATEGORIES } from "@/lib/categories.ts";
-import { COLOR_REFS } from "@/lib/colorRefs.ts";
+import { CANNI_COLLECTIONS } from "@/lib/product-options.ts";
 import { findCategoryLabel } from "@/lib/products.ts";
 import { useProducts } from "@/components/providers/products.tsx";
 
 export default function ProductsPage() {
-  const { category, subcategory } = useParams();
+  const { category, subcategory, collection } = useParams();
   const { products: catalog } = useProducts();
   const currentCategory = CATEGORIES.find((entry) => entry.id === category);
   const currentSubcategory = currentCategory?.subcategories.find((entry) => entry.id === subcategory);
+  const currentCollection = CANNI_COLLECTIONS.find((entry) => entry.id === collection);
+  const isCanni = category === "vernis" && subcategory === "canni";
 
   const products = catalog.filter((product) => {
     if (category && product.category !== category) return false;
     if (subcategory && product.subcategory !== subcategory) return false;
+    if (collection && product.canniCollection !== collection) return false;
     return true;
   });
 
-  const title = category
-    ? `${findCategoryLabel(category)}${currentSubcategory ? ` — ${currentSubcategory.label}` : ""}`
-    : "Tous les produits";
+  const title = currentCollection
+    ? `Vernis Canni — ${currentCollection.label}`
+    : category
+      ? `${findCategoryLabel(category)}${currentSubcategory ? ` — ${currentSubcategory.label}` : ""}`
+      : "Tous les produits";
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">
-      <nav className="mb-6 flex items-center gap-2 text-sm text-slate-400">
+      <nav className="mb-6 flex flex-wrap items-center gap-2 text-sm text-slate-400">
         <Link to="/" className="hover:text-pink-600">Accueil</Link>
-        {currentCategory ? (
+        {currentCategory && (
           <>
             <ChevronRight className="h-4 w-4" />
             <Link to={`/products/${currentCategory.id}`} className="hover:text-pink-600">
               {currentCategory.label}
             </Link>
           </>
-        ) : null}
-        {currentSubcategory ? (
+        )}
+        {currentSubcategory && (
           <>
             <ChevronRight className="h-4 w-4" />
-            <span className="font-bold text-gray-950">{currentSubcategory.label}</span>
+            <Link
+              to={`/products/${currentCategory?.id}/${currentSubcategory.id}`}
+              className={currentCollection ? "hover:text-pink-600" : "font-bold text-gray-950"}
+            >
+              {currentSubcategory.label}
+            </Link>
           </>
-        ) : null}
+        )}
+        {currentCollection && (
+          <>
+            <ChevronRight className="h-4 w-4" />
+            <span className="font-bold text-gray-950">{currentCollection.label}</span>
+          </>
+        )}
       </nav>
 
       <div className="mb-7">
         <h1 className="text-3xl font-extrabold text-gray-950 md:text-4xl">{title}</h1>
-        <p className="mt-2 text-base text-slate-500">
-          {products.length} {products.length > 1 ? "produits" : "produit"}
-        </p>
+        {!isCanni || currentCollection ? (
+          <p className="mt-2 text-base text-slate-500">
+            {products.length} {products.length > 1 ? "produits" : "produit"}
+          </p>
+        ) : (
+          <p className="mt-2 text-base text-slate-500">Choisissez une collection Canni</p>
+        )}
       </div>
 
-      {currentCategory?.subcategories.length ? (
-        <div className="mb-4 flex flex-wrap gap-2">
+      {currentCategory?.subcategories.length && !collection ? (
+        <div className="mb-7 flex flex-wrap gap-2">
           <Link
             to={`/products/${currentCategory.id}`}
             className={`rounded-full px-5 py-2 text-sm font-semibold ${
@@ -73,21 +94,38 @@ export default function ProductsPage() {
         </div>
       ) : null}
 
-      {subcategory && COLOR_REFS[subcategory] ? (
-        <div className="mb-7 flex flex-wrap gap-2">
-          <button className="rounded-full bg-slate-950 px-5 py-1.5 text-sm font-bold text-white">Toutes</button>
-          {COLOR_REFS[subcategory].map((ref) => (
-            <button
-              key={ref}
-              className="rounded-full border border-slate-200 bg-white px-5 py-1.5 text-sm font-semibold text-slate-700 hover:border-pink-300"
-            >
-              {ref}
-            </button>
-          ))}
+      {isCanni && !currentCollection ? (
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+          {CANNI_COLLECTIONS.map((entry) => {
+            const count = catalog.filter(
+              (product) =>
+                product.category === "vernis" &&
+                product.subcategory === "canni" &&
+                product.canniCollection === entry.id,
+            ).length;
+            return (
+              <Link
+                key={entry.id}
+                to={`/products/vernis/canni/${entry.id}`}
+                className="group overflow-hidden rounded-2xl border border-pink-100 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+              >
+                <div className="aspect-square overflow-hidden bg-pink-50">
+                  <SafeImage
+                    src={entry.image}
+                    alt={`Collection Canni ${entry.label}`}
+                    fallbackLabel={entry.label}
+                    className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                  />
+                </div>
+                <div className="flex items-center justify-between px-4 py-3">
+                  <span className="font-extrabold text-slate-950">{entry.label}</span>
+                  <span className="text-xs font-semibold text-slate-400">{count} produit{count > 1 ? "s" : ""}</span>
+                </div>
+              </Link>
+            );
+          })}
         </div>
-      ) : null}
-
-      {products.length === 0 ? (
+      ) : products.length === 0 ? (
         <div className="rounded-3xl border border-dashed border-pink-200 bg-pink-50/50 py-16 text-center">
           <Filter className="mx-auto h-10 w-10 text-pink-300" />
           <p className="mt-4 text-gray-500">Aucun produit dans cette sélection.</p>
