@@ -240,6 +240,7 @@ export default function AdminPage() {
     is_new: true,
   });
   const [colorInput, setColorInput] = useState("");
+  const [colorImageIndex, setColorImageIndex] = useState("");
   const [userForm, setUserForm] = useState({
     name: "",
     email: "",
@@ -284,6 +285,7 @@ export default function AdminPage() {
   const resetProductForm = () => {
     setEditingProductId(null);
     setColorInput("");
+    setColorImageIndex("");
     setProductForm({
       name: "",
       reference: "",
@@ -400,9 +402,34 @@ export default function AdminPage() {
     }
     setProductForm((current) => ({
       ...current,
-      colors: [...current.colors, { name, value: resolveProductColor(name) }],
+      colors: [
+        ...current.colors,
+        {
+          name,
+          value: resolveProductColor(name),
+          imageIndex: colorImageIndex === "" ? undefined : Number(colorImageIndex),
+        },
+      ],
     }));
     setColorInput("");
+    setColorImageIndex("");
+  };
+
+  const removeProductImage = (removedIndex: number) => {
+    setProductForm((current) => ({
+      ...current,
+      images: current.images.filter((_, imageIndex) => imageIndex !== removedIndex),
+      colors: current.colors.map((color) => {
+        if (color.imageIndex === undefined) return color;
+        if (color.imageIndex === removedIndex) {
+          const { imageIndex: _imageIndex, ...rest } = color;
+          return rest;
+        }
+        return color.imageIndex > removedIndex
+          ? { ...color, imageIndex: color.imageIndex - 1 }
+          : color;
+      }),
+    }));
   };
 
   const removeProduct = async (productId: string) => {
@@ -689,9 +716,12 @@ export default function AdminPage() {
                         {productForm.images.map((image, index) => (
                           <div key={`${image.slice(0, 32)}-${index}`} className="group relative overflow-hidden rounded-xl border border-pink-100 bg-white">
                             <SafeImage src={image} alt={`Photo ${index + 1}`} fallbackLabel={`Photo ${index + 1}`} className="aspect-square w-full object-cover" />
+                            <span className="absolute left-1 top-1 flex h-7 min-w-7 items-center justify-center rounded-full bg-white px-2 text-xs font-black text-slate-950 shadow">
+                              {index + 1}
+                            </span>
                             <button
                               type="button"
-                              onClick={() => setProductForm((current) => ({ ...current, images: current.images.filter((_, imageIndex) => imageIndex !== index) }))}
+                              onClick={() => removeProductImage(index)}
                               className="absolute right-1 top-1 flex h-7 w-7 items-center justify-center rounded-full bg-slate-950/80 text-white"
                               aria-label={`Supprimer la photo ${index + 1}`}
                             >
@@ -781,7 +811,7 @@ export default function AdminPage() {
                       <p className="font-black text-slate-950">Couleurs disponibles</p>
                       <p className="mt-1 text-xs font-semibold text-slate-500">Écrivez une couleur, par exemple rose, rouge, nude ou #d946ef.</p>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="grid gap-2 sm:grid-cols-[2.5rem_minmax(0,1fr)_9rem_auto]">
                       <div
                         className="h-11 w-11 shrink-0 rounded-xl border border-slate-200 shadow-inner"
                         style={{ backgroundColor: resolveProductColor(colorInput) }}
@@ -797,17 +827,54 @@ export default function AdminPage() {
                         }}
                         placeholder="Nom ou code couleur"
                       />
+                      <select
+                        value={colorImageIndex}
+                        onChange={(event) => setColorImageIndex(event.target.value)}
+                        disabled={productForm.images.length === 0}
+                        className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-50"
+                        aria-label="Photo associée à la couleur"
+                      >
+                        <option value="">Photo auto</option>
+                        {productForm.images.map((_, imageIndex) => (
+                          <option key={imageIndex} value={imageIndex}>Photo {imageIndex + 1}</option>
+                        ))}
+                      </select>
                       <Button type="button" variant="outline" onClick={addProductColor} className="h-11 shrink-0 rounded-xl">
                         <Plus className="h-4 w-4" />
                         Ajouter
                       </Button>
                     </div>
                     {productForm.colors.length > 0 && (
-                      <div className="mt-3 flex flex-wrap gap-2">
+                      <div className="mt-3 grid gap-2">
                         {productForm.colors.map((color, index) => (
-                          <div key={`${color.name}-${index}`} className="flex items-center gap-2 rounded-full border border-slate-200 bg-white py-1 pl-1 pr-2 text-sm font-bold text-slate-700">
+                          <div key={`${color.name}-${index}`} className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-white p-2 text-sm font-bold text-slate-700">
                             <span className="h-7 w-7 rounded-full border border-black/10" style={{ backgroundColor: color.value }} />
-                            {color.name}
+                            <span className="min-w-24 flex-1">{color.name}</span>
+                            <select
+                              value={color.imageIndex ?? ""}
+                              onChange={(event) => {
+                                const nextValue = event.target.value;
+                                setProductForm((current) => ({
+                                  ...current,
+                                  colors: current.colors.map((entry, colorIndex) =>
+                                    colorIndex === index
+                                      ? {
+                                          ...entry,
+                                          imageIndex: nextValue === "" ? undefined : Number(nextValue),
+                                        }
+                                      : entry,
+                                  ),
+                                }));
+                              }}
+                              disabled={productForm.images.length === 0}
+                              className="h-9 rounded-lg border border-slate-200 bg-white px-2 text-xs font-bold disabled:opacity-50"
+                              aria-label={`Photo associée à ${color.name}`}
+                            >
+                              <option value="">Photo auto</option>
+                              {productForm.images.map((_, imageIndex) => (
+                                <option key={imageIndex} value={imageIndex}>Photo {imageIndex + 1}</option>
+                              ))}
+                            </select>
                             <button
                               type="button"
                               onClick={() => setProductForm((current) => ({ ...current, colors: current.colors.filter((_, colorIndex) => colorIndex !== index) }))}

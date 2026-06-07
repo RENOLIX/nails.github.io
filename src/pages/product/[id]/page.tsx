@@ -127,7 +127,16 @@ export default function ProductDetailPage() {
                     <button
                       key={`${color.name}-${color.value}`}
                       type="button"
-                      onClick={() => setSelectedColor(color.name)}
+                      onClick={() => {
+                        setSelectedColor(color.name);
+                        if (
+                          color.imageIndex !== undefined &&
+                          color.imageIndex >= 0 &&
+                          color.imageIndex < gallery.length
+                        ) {
+                          setActiveImage(color.imageIndex);
+                        }
+                      }}
                       className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-bold transition ${
                         active ? "border-pink-500 bg-pink-50 text-pink-700" : "border-slate-200 bg-white text-slate-700"
                       }`}

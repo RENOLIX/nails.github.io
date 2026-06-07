@@ -11,6 +11,7 @@ export type CanniCollectionId =
 export type ProductColor = {
   name: string;
   value: string;
+  imageIndex?: number;
 };
 
 export const CANNI_COLLECTIONS: Array<{
