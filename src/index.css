@@ -69,3 +69,35 @@
     @apply bg-background text-foreground;
   }
 }
+
+@keyframes review-feed-scroll {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-50%);
+  }
+}
+
+.review-feed {
+  mask-image: linear-gradient(to bottom, transparent, black 10%, black 90%, transparent);
+}
+
+.review-feed-track {
+  animation: review-feed-scroll 18s linear infinite;
+}
+
+.review-feed:hover .review-feed-track {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .review-feed {
+    overflow-y: auto;
+    mask-image: none;
+  }
+
+  .review-feed-track {
+    animation: none;
+  }
+}

@@ -1,7 +1,9 @@
 import {
   BarChart3,
+  Check,
   Clock,
   Eye,
+  EyeOff,
   Lock,
   LogOut,
   MessageSquareText,
@@ -33,9 +35,13 @@ import { NAILSY_LOGO } from "@/lib/assets.ts";
 import {
   adminCreateProduct,
   adminCreateUser,
+  adminDeleteOrder,
   adminDeleteProduct,
+  adminDeleteProductRequest,
+  adminDeleteReview,
   adminDeleteUser,
   adminLogin,
+  adminSetReviewApproval,
   adminUpdateOrder,
   adminUpdateProduct,
   loadAdminDashboard,
@@ -450,6 +456,50 @@ export default function AdminPage() {
     await refresh();
   };
 
+  const removeOrder = async (orderId: string) => {
+    if (!session || !window.confirm("Supprimer définitivement cette commande ?")) return;
+    try {
+      await adminDeleteOrder(session.token, orderId);
+      toast.success("Commande supprimée");
+      await refresh();
+    } catch {
+      toast.error("Impossible de supprimer la commande.");
+    }
+  };
+
+  const setReviewApproval = async (reviewId: string, approved: boolean) => {
+    if (!session) return;
+    try {
+      await adminSetReviewApproval(session.token, reviewId, approved);
+      toast.success(approved ? "Avis approuvé et publié" : "Avis désapprouvé");
+      await refresh();
+    } catch {
+      toast.error("Impossible de modifier cet avis.");
+    }
+  };
+
+  const removeReview = async (reviewId: string) => {
+    if (!session || !window.confirm("Supprimer définitivement cet avis ?")) return;
+    try {
+      await adminDeleteReview(session.token, reviewId);
+      toast.success("Avis supprimé");
+      await refresh();
+    } catch {
+      toast.error("Impossible de supprimer cet avis.");
+    }
+  };
+
+  const removeProductRequest = async (requestId: string) => {
+    if (!session || !window.confirm("Supprimer définitivement cette demande produit ?")) return;
+    try {
+      await adminDeleteProductRequest(session.token, requestId);
+      toast.success("Demande supprimée");
+      await refresh();
+    } catch {
+      toast.error("Impossible de supprimer cette demande.");
+    }
+  };
+
   if (!session) {
     return <LoginPanel onLogin={setSession} />;
   }
@@ -788,7 +838,7 @@ export default function AdminPage() {
 
           {tab === "orders" && (
             <Panel title="Commandes du site" icon={Eye}>
-              <OrdersManager orders={dashboard.orders} onSave={saveOrder} />
+              <OrdersManager orders={dashboard.orders} onSave={saveOrder} onDelete={removeOrder} />
             </Panel>
           )}
 
@@ -809,6 +859,23 @@ export default function AdminPage() {
                         </div>
                       </div>
                       <p className="mt-3 text-sm leading-6 text-slate-600">{review.message}</p>
+                      <div className="mt-4 flex flex-wrap gap-2 border-t border-slate-100 pt-4">
+                        {review.approved ? (
+                          <Button type="button" variant="outline" onClick={() => void setReviewApproval(review.id, false)} className="rounded-xl">
+                            <EyeOff className="h-4 w-4" />
+                            Désapprouver
+                          </Button>
+                        ) : (
+                          <Button type="button" onClick={() => void setReviewApproval(review.id, true)} className="rounded-xl bg-emerald-600 text-white hover:bg-emerald-700">
+                            <Check className="h-4 w-4" />
+                            Approuver
+                          </Button>
+                        )}
+                        <Button type="button" variant="outline" onClick={() => void removeReview(review.id)} className="rounded-xl border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700">
+                          <Trash2 className="h-4 w-4" />
+                          Supprimer
+                        </Button>
+                      </div>
                     </article>
                   ))}
                   {dashboard.reviews.length === 0 && <p className="py-12 text-center text-sm text-slate-400">Aucun avis reçu.</p>}
@@ -821,6 +888,10 @@ export default function AdminPage() {
                       <p className="font-black text-slate-950">{request.name}</p>
                       <p className="mt-2 text-sm leading-6 text-slate-700">{request.product}</p>
                       <p className="mt-3 text-xs font-semibold text-slate-500">{request.phone || "Sans téléphone"} · {formatDate(request.created_at)}</p>
+                      <Button type="button" variant="outline" onClick={() => void removeProductRequest(request.id)} className="mt-4 rounded-xl border-red-200 bg-white text-red-600 hover:bg-red-50 hover:text-red-700">
+                        <Trash2 className="h-4 w-4" />
+                        Supprimer
+                      </Button>
                     </article>
                   ))}
                   {dashboard.product_requests.length === 0 && <p className="py-12 text-center text-sm text-slate-400">Aucune demande.</p>}
@@ -908,9 +979,11 @@ function normalizeOrderStatus(status: string): OrderStatus {
 function OrdersManager({
   orders,
   onSave,
+  onDelete,
 }: {
   orders: AdminDashboardData["orders"];
   onSave: (orderId: string, order: OrderUpdateInput) => Promise<void>;
+  onDelete: (orderId: string) => Promise<void>;
 }) {
   if (orders.length === 0) {
     return <p className="py-12 text-center text-sm text-slate-400">Aucune commande pour l'instant.</p>;
@@ -919,7 +992,7 @@ function OrdersManager({
   return (
     <div className="space-y-4">
       {orders.map((order) => (
-        <OrderEditor key={order.id} order={order} onSave={onSave} />
+        <OrderEditor key={order.id} order={order} onSave={onSave} onDelete={onDelete} />
       ))}
     </div>
   );
@@ -928,9 +1001,11 @@ function OrdersManager({
 function OrderEditor({
   order,
   onSave,
+  onDelete,
 }: {
   order: AdminDashboardData["orders"][number];
   onSave: (orderId: string, order: OrderUpdateInput) => Promise<void>;
+  onDelete: (orderId: string) => Promise<void>;
 }) {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -973,6 +1048,10 @@ function OrderEditor({
           <Button type="button" variant="outline" onClick={() => setEditing((current) => !current)} className="rounded-xl">
             <Pencil className="h-4 w-4" />
             {editing ? "Fermer" : "Modifier"}
+          </Button>
+          <Button type="button" variant="outline" onClick={() => void onDelete(order.id)} className="rounded-xl border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700">
+            <Trash2 className="h-4 w-4" />
+            Supprimer
           </Button>
         </div>
       </div>

@@ -38,11 +38,12 @@ async function supabaseRequest<T>(path: string, options: RequestOptions = {}) {
     throw new Error(readable || `Supabase request failed: ${response.status}`);
   }
 
-  if (response.status === 204) {
+  const responseText = await response.text();
+  if (!responseText) {
     return null as T;
   }
 
-  return (await response.json()) as T;
+  return JSON.parse(responseText) as T;
 }
 
 function rpc<T>(name: string, body: Json) {
@@ -382,6 +383,64 @@ export function adminUpdateOrder(token: string, orderId: string, order: OrderUpd
   });
 }
 
+export function adminDeleteOrder(token: string, orderId: string) {
+  if (isLocalToken(token)) {
+    const data = readLocalDashboard();
+    data.orders = data.orders.filter((order) => order.id !== orderId);
+    writeLocalDashboard(data);
+    return Promise.resolve({ deleted: true });
+  }
+  return rpc<{ deleted: boolean }>("admin_delete_order", {
+    session_token: token,
+    order_id: orderId,
+  });
+}
+
+export function adminSetReviewApproval(token: string, reviewId: string, approved: boolean) {
+  if (isLocalToken(token)) {
+    const data = readLocalDashboard();
+    let updated: AdminReview | undefined;
+    data.reviews = data.reviews.map((review) => {
+      if (review.id !== reviewId) return review;
+      updated = { ...review, approved };
+      return updated;
+    });
+    writeLocalDashboard(data);
+    return Promise.resolve(updated ?? data.reviews.find((review) => review.id === reviewId)!);
+  }
+  return rpc<AdminReview>("admin_set_review_approval", {
+    session_token: token,
+    review_id: reviewId,
+    next_approved: approved,
+  });
+}
+
+export function adminDeleteReview(token: string, reviewId: string) {
+  if (isLocalToken(token)) {
+    const data = readLocalDashboard();
+    data.reviews = data.reviews.filter((review) => review.id !== reviewId);
+    writeLocalDashboard(data);
+    return Promise.resolve({ deleted: true });
+  }
+  return rpc<{ deleted: boolean }>("admin_delete_review", {
+    session_token: token,
+    review_id: reviewId,
+  });
+}
+
+export function adminDeleteProductRequest(token: string, requestId: string) {
+  if (isLocalToken(token)) {
+    const data = readLocalDashboard();
+    data.product_requests = data.product_requests.filter((request) => request.id !== requestId);
+    writeLocalDashboard(data);
+    return Promise.resolve({ deleted: true });
+  }
+  return rpc<{ deleted: boolean }>("admin_delete_product_request", {
+    session_token: token,
+    request_id: requestId,
+  });
+}
+
 export function adminCreateUser(token: string, user: { email: string; name: string; role: AdminRole; password: string }) {
   if (isLocalToken(token)) {
     const data = readLocalDashboard();
@@ -458,6 +517,13 @@ export function createProductRequest(request: { name: string; phone: string; pro
     method: "POST",
     body: { ...request, status: "new" },
   });
+}
+
+export function listApprovedReviews() {
+  return supabaseRequest<AdminReview[]>(
+    "reviews?select=id,name,rating,message,approved,created_at&approved=eq.true&order=created_at.desc",
+    { method: "GET" },
+  );
 }
 
 export async function listPublicProducts() {

@@ -1,10 +1,10 @@
-import { Heart, PackagePlus, Send, Sparkles, Star } from "lucide-react";
-import { useState } from "react";
+import { CheckCircle2, Heart, PackagePlus, Send, Sparkles, Star } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button.tsx";
 import { Input } from "@/components/ui/input.tsx";
 import { Textarea } from "@/components/ui/textarea.tsx";
-import { createProductRequest, createReview } from "@/lib/supabase.ts";
+import { createProductRequest, createReview, listApprovedReviews } from "@/lib/supabase.ts";
 
 type Review = {
   name: string;
@@ -18,7 +18,7 @@ const initialReviews: Review[] = [
 ];
 
 export default function WishlistPage() {
-  const reviews = initialReviews;
+  const [approvedReviews, setApprovedReviews] = useState<Review[]>([]);
   const [reviewName, setReviewName] = useState("");
   const [reviewMessage, setReviewMessage] = useState("");
   const [rating, setRating] = useState(5);
@@ -27,6 +27,49 @@ export default function WishlistPage() {
   const [requestProduct, setRequestProduct] = useState("");
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const [requestSubmitting, setRequestSubmitting] = useState(false);
+  const [reviewSent, setReviewSent] = useState(false);
+  const [requestSent, setRequestSent] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+
+    const loadReviews = async () => {
+      try {
+        const rows = await listApprovedReviews();
+        if (!active) return;
+        setApprovedReviews(
+          rows.map((review) => ({
+            name: review.name,
+            rating: review.rating,
+            message: review.message,
+          })),
+        );
+      } catch {
+        if (active) setApprovedReviews([]);
+      }
+    };
+
+    void loadReviews();
+    const interval = window.setInterval(() => void loadReviews(), 15000);
+
+    return () => {
+      active = false;
+      window.clearInterval(interval);
+    };
+  }, []);
+
+  const reviews = useMemo(() => {
+    const seen = new Set(initialReviews.map((review) => `${review.name}|${review.message}`.toLowerCase()));
+    return [
+      ...initialReviews,
+      ...approvedReviews.filter((review) => {
+        const key = `${review.name}|${review.message}`.toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      }),
+    ];
+  }, [approvedReviews]);
 
   const submitReview = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -34,14 +77,20 @@ export default function WishlistPage() {
       toast.error("Ajoutez votre nom et votre avis.");
       return;
     }
-    const nextReview = { name: reviewName.trim(), rating, message: reviewMessage.trim() };
+
+    setReviewSent(false);
     setReviewSubmitting(true);
     try {
-      await createReview(nextReview);
+      await createReview({
+        name: reviewName.trim(),
+        rating,
+        message: reviewMessage.trim(),
+      });
       setReviewName("");
       setReviewMessage("");
       setRating(5);
-      toast.success("Avis envoyé à l'administration pour validation");
+      setReviewSent(true);
+      toast.success("Merci ! Votre avis a bien été envoyé.");
     } catch (error) {
       console.warn("Supabase review save failed", error);
       toast.error("Impossible d'envoyer votre avis. Réessayez.");
@@ -56,6 +105,8 @@ export default function WishlistPage() {
       toast.error("Indiquez votre nom et le produit souhaité.");
       return;
     }
+
+    setRequestSent(false);
     setRequestSubmitting(true);
     try {
       await createProductRequest({
@@ -66,7 +117,8 @@ export default function WishlistPage() {
       setRequestName("");
       setRequestPhone("");
       setRequestProduct("");
-      toast.success("Demande envoyée à l'administration");
+      setRequestSent(true);
+      toast.success("Merci ! Votre demande a bien été envoyée.");
     } catch (error) {
       console.warn("Supabase product request save failed", error);
       toast.error("Impossible d'envoyer la demande. Réessayez.");
@@ -94,6 +146,12 @@ export default function WishlistPage() {
             <h2 className="text-xl font-extrabold text-gray-950">Laisser un avis</h2>
           </div>
           <form className="space-y-4" onSubmit={submitReview}>
+            {reviewSent && (
+              <div role="status" className="flex items-start gap-3 rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800">
+                <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" />
+                <span>Merci pour votre avis. Il sera publié après validation par notre équipe.</span>
+              </div>
+            )}
             <Input value={reviewName} onChange={(event) => setReviewName(event.target.value)} placeholder="Votre nom" />
             <div className="flex gap-2">
               {Array.from({ length: 5 }).map((_, index) => (
@@ -114,20 +172,26 @@ export default function WishlistPage() {
             </Button>
           </form>
 
-          <div className="mt-8 space-y-3">
-            {reviews.map((review, index) => (
-              <article key={`${review.name}-${index}`} className="rounded-2xl bg-pink-50/70 p-4">
-                <div className="mb-2 flex items-center justify-between">
-                  <h3 className="font-bold text-gray-950">{review.name}</h3>
-                  <div className="flex">
-                    {Array.from({ length: review.rating }).map((_, star) => (
-                      <Star key={star} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                    ))}
-                  </div>
+          <div className="review-feed mt-8 h-52 overflow-hidden" aria-label="Avis clientes">
+            <div className="review-feed-track">
+              {[0, 1].map((copy) => (
+                <div key={copy} className="space-y-3 pb-3" aria-hidden={copy === 1}>
+                  {reviews.map((review, index) => (
+                    <article key={`${copy}-${review.name}-${index}`} className="rounded-2xl bg-pink-50/70 p-4">
+                      <div className="mb-2 flex items-center justify-between gap-3">
+                        <h3 className="font-bold text-gray-950">{review.name}</h3>
+                        <div className="flex shrink-0">
+                          {Array.from({ length: review.rating }).map((_, star) => (
+                            <Star key={star} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                          ))}
+                        </div>
+                      </div>
+                      <p className="text-sm leading-6 text-gray-600">{review.message}</p>
+                    </article>
+                  ))}
                 </div>
-                <p className="text-sm leading-6 text-gray-600">{review.message}</p>
-              </article>
-            ))}
+              ))}
+            </div>
           </div>
         </section>
 
@@ -140,6 +204,12 @@ export default function WishlistPage() {
             Une cliente cherche une couleur Canni, Venalisa, une lampe, des capsules ou une déco qui manque? Elle peut envoyer une demande directe.
           </p>
           <form className="space-y-4" onSubmit={submitRequest}>
+            {requestSent && (
+              <div role="status" className="flex items-start gap-3 rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800">
+                <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" />
+                <span>Merci ! Votre demande a bien été transmise à notre équipe.</span>
+              </div>
+            )}
             <Input value={requestName} onChange={(event) => setRequestName(event.target.value)} placeholder="Nom" />
             <Input value={requestPhone} onChange={(event) => setRequestPhone(event.target.value)} inputMode="tel" placeholder="Téléphone optionnel" />
             <Textarea value={requestProduct} onChange={(event) => setRequestProduct(event.target.value)} placeholder="Produit souhaité, marque, référence, couleur..." />
