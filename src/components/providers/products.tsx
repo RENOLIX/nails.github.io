@@ -31,19 +31,10 @@ export function ProductsProvider({ children }: PropsWithChildren) {
           return localMatch ? { ...localMatch, ...product, id: localMatch.id } : product;
         });
 
-        const remoteReferences = new Set(
-          nextProducts.map((product) => product.reference?.toLowerCase()).filter(Boolean),
-        );
-        const missingLocalProducts = PRODUCTS.filter(
-          (product) =>
-            !mergedProducts.some((entry) => entry.id === product.id) &&
-            (!product.reference || !remoteReferences.has(product.reference.toLowerCase())),
-        );
-
-        setProducts([...mergedProducts, ...missingLocalProducts]);
+        setProducts(mergedProducts);
       })
       .catch(() => {
-        if (alive) setProducts(PRODUCTS);
+        if (alive) setProducts([]);
       })
       .finally(() => {
         if (alive) setLoading(false);

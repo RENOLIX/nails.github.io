@@ -18,13 +18,15 @@ const initialReviews: Review[] = [
 ];
 
 export default function WishlistPage() {
-  const [reviews, setReviews] = useState<Review[]>(initialReviews);
+  const reviews = initialReviews;
   const [reviewName, setReviewName] = useState("");
   const [reviewMessage, setReviewMessage] = useState("");
   const [rating, setRating] = useState(5);
   const [requestName, setRequestName] = useState("");
   const [requestPhone, setRequestPhone] = useState("");
   const [requestProduct, setRequestProduct] = useState("");
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [requestSubmitting, setRequestSubmitting] = useState(false);
 
   const submitReview = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -33,16 +35,19 @@ export default function WishlistPage() {
       return;
     }
     const nextReview = { name: reviewName.trim(), rating, message: reviewMessage.trim() };
+    setReviewSubmitting(true);
     try {
       await createReview(nextReview);
+      setReviewName("");
+      setReviewMessage("");
+      setRating(5);
+      toast.success("Avis envoyé à l'administration pour validation");
     } catch (error) {
       console.warn("Supabase review save failed", error);
+      toast.error("Impossible d'envoyer votre avis. Réessayez.");
+    } finally {
+      setReviewSubmitting(false);
     }
-    setReviews((current) => [nextReview, ...current]);
-    setReviewName("");
-    setReviewMessage("");
-    setRating(5);
-    toast.success("Merci pour votre avis");
   };
 
   const submitRequest = async (event: React.FormEvent) => {
@@ -51,21 +56,23 @@ export default function WishlistPage() {
       toast.error("Indiquez votre nom et le produit souhaité.");
       return;
     }
+    setRequestSubmitting(true);
     try {
       await createProductRequest({
         name: requestName.trim(),
         phone: requestPhone.trim(),
         product: requestProduct.trim(),
       });
+      setRequestName("");
+      setRequestPhone("");
+      setRequestProduct("");
+      toast.success("Demande envoyée à l'administration");
     } catch (error) {
       console.warn("Supabase product request save failed", error);
+      toast.error("Impossible d'envoyer la demande. Réessayez.");
+    } finally {
+      setRequestSubmitting(false);
     }
-    const message = `Bonjour Nailsy Magic,%0AJe souhaite demander l'ajout de ce produit:%0A${encodeURIComponent(requestProduct)}%0A%0ANom: ${encodeURIComponent(requestName)}%0ATelephone: ${encodeURIComponent(requestPhone || "-")}`;
-    window.open(`https://wa.me/213550000000?text=${message}`, "_blank", "noopener,noreferrer");
-    setRequestName("");
-    setRequestPhone("");
-    setRequestProduct("");
-    toast.success("Demande préparée sur WhatsApp");
   };
 
   return (
@@ -102,8 +109,8 @@ export default function WishlistPage() {
               ))}
             </div>
             <Textarea value={reviewMessage} onChange={(event) => setReviewMessage(event.target.value)} placeholder="Votre expérience avec Nailsy Magic..." />
-            <Button className="h-11 rounded-full bg-pink-600 px-6 hover:bg-pink-700">
-              Publier l’avis
+            <Button type="submit" disabled={reviewSubmitting} className="h-11 rounded-full bg-pink-600 px-6 hover:bg-pink-700">
+              {reviewSubmitting ? "Envoi..." : "Publier l’avis"}
             </Button>
           </form>
 
@@ -136,9 +143,9 @@ export default function WishlistPage() {
             <Input value={requestName} onChange={(event) => setRequestName(event.target.value)} placeholder="Nom" />
             <Input value={requestPhone} onChange={(event) => setRequestPhone(event.target.value)} inputMode="tel" placeholder="Téléphone optionnel" />
             <Textarea value={requestProduct} onChange={(event) => setRequestProduct(event.target.value)} placeholder="Produit souhaité, marque, référence, couleur..." />
-            <Button className="h-11 rounded-full bg-gray-950 px-6 text-white hover:bg-gray-800">
+            <Button type="submit" disabled={requestSubmitting} className="h-11 rounded-full bg-gray-950 px-6 text-white hover:bg-gray-800">
               <Send className="h-4 w-4" />
-              Envoyer la demande
+              {requestSubmitting ? "Envoi..." : "Envoyer la demande"}
             </Button>
           </form>
         </section>

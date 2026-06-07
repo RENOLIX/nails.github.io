@@ -470,5 +470,5 @@ export async function listPublicProducts() {
     },
   );
 
-  return rows.length > 0 ? adminProductsToProducts(rows) : PRODUCTS;
+  return adminProductsToProducts(rows);
 }

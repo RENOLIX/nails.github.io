@@ -165,7 +165,7 @@ export default function CartPage() {
             </select>
 
             <Input value={address} onChange={(event) => setAddress(event.target.value)} placeholder="Adresse complète" />
-            <Textarea value={note} onChange={(event) => setNote(event.target.value)} placeholder="Note de commande, références couleurs, disponibilité..." />
+            <Textarea value={note} onChange={(event) => setNote(event.target.value)} placeholder="Note" />
 
             <div>
               <p className="mb-3 text-sm font-bold text-gray-900">Méthode de livraison</p>
