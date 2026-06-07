@@ -449,7 +449,6 @@ export async function createOrder(order: {
 export function createReview(review: { name: string; rating: number; message: string }) {
   return supabaseRequest("reviews", {
     method: "POST",
-    headers: { Prefer: "return=representation" },
     body: { ...review, approved: false },
   });
 }
@@ -457,7 +456,6 @@ export function createReview(review: { name: string; rating: number; message: st
 export function createProductRequest(request: { name: string; phone: string; product: string }) {
   return supabaseRequest("product_requests", {
     method: "POST",
-    headers: { Prefer: "return=representation" },
     body: { ...request, status: "new" },
   });
 }
