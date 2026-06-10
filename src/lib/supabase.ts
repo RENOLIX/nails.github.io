@@ -283,6 +283,18 @@ export async function loadAdminDashboard(token: string) {
   });
 }
 
+export async function loadAdminProduct(token: string, productId: string) {
+  if (isLocalToken(token)) {
+    const product = readLocalDashboard().products.find((entry) => entry.id === productId);
+    if (!product) throw new Error("Product not found");
+    return product;
+  }
+  return rpc<AdminProduct>("admin_product_detail", {
+    session_token: token,
+    product_id: productId,
+  });
+}
+
 export function adminCreateProduct(token: string, product: ProductInput) {
   if (isLocalToken(token)) {
     const data = readLocalDashboard();

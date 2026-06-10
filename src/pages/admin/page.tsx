@@ -45,6 +45,7 @@ import {
   adminUpdateOrder,
   adminUpdateProduct,
   loadAdminDashboard,
+  loadAdminProduct,
   type AdminProduct,
   type AdminDashboardData,
   type AdminRole,
@@ -263,10 +264,20 @@ export default function AdminPage() {
     try {
       const next = await loadAdminDashboard(activeSession.token);
       setDashboard(next);
-    } catch {
-      toast.error("Session admin expirée. Reconnectez-vous.");
-      window.localStorage.removeItem(SESSION_KEY);
-      setSession(null);
+    } catch (error) {
+      const message = error instanceof Error ? error.message.toLowerCase() : "";
+      const sessionInvalid =
+        message.includes("invalid session") ||
+        message.includes("session expired") ||
+        message.includes("unauthorized");
+
+      if (sessionInvalid) {
+        toast.error("Session admin expirée. Reconnectez-vous.");
+        window.localStorage.removeItem(SESSION_KEY);
+        setSession(null);
+      } else {
+        toast.error("Le tableau de bord n'a pas pu charger. Réessayez dans quelques secondes.");
+      }
     } finally {
       setLoading(false);
     }
@@ -303,24 +314,34 @@ export default function AdminPage() {
     });
   };
 
-  const editProduct = (product: AdminProduct) => {
-    setEditingProductId(product.id);
-    setProductForm({
-      name: product.name,
-      reference: product.reference ?? "",
-      category: product.category,
-      subcategory: product.subcategory ?? "",
-      price: String(product.price),
-      old_price: product.old_price ? String(product.old_price) : "",
-      images: product.images?.length ? product.images : product.image_url ? [product.image_url] : [],
-      stock: String(product.stock ?? 20),
-      canni_collection: product.canni_collection ?? "",
-      colors: product.colors ?? [],
-      description: product.description ?? "",
-      is_best_seller: product.is_best_seller,
-      is_new: product.is_new,
-    });
-    setTab("add-product");
+  const editProduct = async (product: AdminProduct) => {
+    if (!session) return;
+    try {
+      const detailedProduct = await loadAdminProduct(session.token, product.id);
+      setEditingProductId(detailedProduct.id);
+      setProductForm({
+        name: detailedProduct.name,
+        reference: detailedProduct.reference ?? "",
+        category: detailedProduct.category,
+        subcategory: detailedProduct.subcategory ?? "",
+        price: String(detailedProduct.price),
+        old_price: detailedProduct.old_price ? String(detailedProduct.old_price) : "",
+        images: detailedProduct.images?.length
+          ? detailedProduct.images
+          : detailedProduct.image_url
+            ? [detailedProduct.image_url]
+            : [],
+        stock: String(detailedProduct.stock ?? 20),
+        canni_collection: detailedProduct.canni_collection ?? "",
+        colors: detailedProduct.colors ?? [],
+        description: detailedProduct.description ?? "",
+        is_best_seller: detailedProduct.is_best_seller,
+        is_new: detailedProduct.is_new,
+      });
+      setTab("add-product");
+    } catch {
+      toast.error("Impossible de charger les détails de ce produit.");
+    }
   };
 
   const submitProduct = async (event: React.FormEvent) => {
@@ -678,7 +699,7 @@ export default function AdminPage() {
                             </div>
                           </td>
                           <td className="py-4 text-right">
-                            <button type="button" onClick={() => editProduct(product)} className="mr-2 inline-flex h-9 w-9 items-center justify-center rounded-xl text-slate-400 hover:bg-pink-50 hover:text-pink-600" aria-label="Modifier le produit">
+                            <button type="button" onClick={() => void editProduct(product)} className="mr-2 inline-flex h-9 w-9 items-center justify-center rounded-xl text-slate-400 hover:bg-pink-50 hover:text-pink-600" aria-label="Modifier le produit">
                               <Pencil className="h-4 w-4" />
                             </button>
                             <button type="button" onClick={() => removeProduct(product.id)} className="inline-flex h-9 w-9 items-center justify-center rounded-xl text-slate-400 hover:bg-red-50 hover:text-red-600">
