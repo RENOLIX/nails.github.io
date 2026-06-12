@@ -3,7 +3,7 @@ import { ChevronRight, Filter } from "lucide-react";
 import ProductCard from "@/components/ProductCard.tsx";
 import SafeImage from "@/components/SafeImage.tsx";
 import { CATEGORIES } from "@/lib/categories.ts";
-import { CANNI_COLLECTIONS } from "@/lib/product-options.ts";
+import { CANNI_COLLECTIONS, PRODUCT_COLLECTIONS, VENALISA_COLLECTIONS } from "@/lib/product-options.ts";
 import { findCategoryLabel } from "@/lib/products.ts";
 import { useProducts } from "@/components/providers/products.tsx";
 import { Skeleton } from "@/components/ui/skeleton.tsx";
@@ -13,8 +13,10 @@ export default function ProductsPage() {
   const { products: catalog, loading } = useProducts();
   const currentCategory = CATEGORIES.find((entry) => entry.id === category);
   const currentSubcategory = currentCategory?.subcategories.find((entry) => entry.id === subcategory);
-  const currentCollection = CANNI_COLLECTIONS.find((entry) => entry.id === collection);
+  const currentCollection = PRODUCT_COLLECTIONS.find((entry) => entry.id === collection);
   const isCanni = category === "vernis" && subcategory === "canni";
+  const isVenalisa = category === "vernis" && subcategory === "venalisa";
+  const subcategoryCollections = isCanni ? CANNI_COLLECTIONS : isVenalisa ? VENALISA_COLLECTIONS : [];
 
   const products = catalog.filter((product) => {
     if (category && product.category !== category) return false;
@@ -24,7 +26,7 @@ export default function ProductsPage() {
   });
 
   const title = currentCollection
-    ? `Vernis Canni — ${currentCollection.label}`
+    ? `Vernis ${currentSubcategory?.label ?? ""} — ${currentCollection.label}`
     : category
       ? `${findCategoryLabel(category)}${currentSubcategory ? ` — ${currentSubcategory.label}` : ""}`
       : "Tous les produits";
@@ -108,27 +110,17 @@ export default function ProductsPage() {
 
       <div className="mb-7">
         <h1 className="text-3xl font-extrabold text-gray-950 md:text-4xl">{title}</h1>
-        {!isCanni || currentCollection ? (
+        {subcategoryCollections.length === 0 || currentCollection ? (
           <p className="mt-2 text-base text-slate-500">
             {products.length} {products.length > 1 ? "produits" : "produit"}
           </p>
         ) : (
-          <p className="mt-2 text-base text-slate-500">Choisissez une collection Canni</p>
+          <p className="mt-2 text-base text-slate-500">Choisissez une collection {currentSubcategory?.label}</p>
         )}
       </div>
 
       {currentCategory?.subcategories.length && !collection ? (
         <div className="mb-7 flex flex-wrap gap-2">
-          {!isCanni && (
-            <Link
-              to={`/products/${currentCategory.id}`}
-              className={`rounded-full px-5 py-2 text-sm font-semibold ${
-                !subcategory ? "bg-pink-500 text-white" : "bg-slate-100 text-slate-700 hover:bg-pink-50"
-              }`}
-            >
-              Tout
-            </Link>
-          )}
           {currentCategory.subcategories.map((entry) => (
             <Link
               key={entry.id}
@@ -143,25 +135,25 @@ export default function ProductsPage() {
         </div>
       ) : null}
 
-      {isCanni && !currentCollection ? (
+      {subcategoryCollections.length > 0 && !currentCollection ? (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-          {CANNI_COLLECTIONS.map((entry) => {
+          {subcategoryCollections.map((entry) => {
             const count = catalog.filter(
               (product) =>
                 product.category === "vernis" &&
-                product.subcategory === "canni" &&
+                product.subcategory === subcategory &&
                 product.canniCollection === entry.id,
             ).length;
             return (
               <Link
                 key={entry.id}
-                to={`/products/vernis/canni/${entry.id}`}
+                to={`/products/vernis/${subcategory}/${entry.id}`}
                 className="group overflow-hidden rounded-2xl border border-pink-100 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
               >
                 <div className="aspect-square overflow-hidden bg-pink-50">
                   <SafeImage
                     src={entry.image}
-                    alt={`Collection Canni ${entry.label}`}
+                    alt={`Collection ${currentSubcategory?.label ?? ""} ${entry.label}`}
                     fallbackLabel={entry.label}
                     className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
                   />

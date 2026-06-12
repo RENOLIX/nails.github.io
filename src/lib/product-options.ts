@@ -8,6 +8,8 @@ export type CanniCollectionId =
   | "cc7"
   | "cc8";
 
+export type VenalisaCollectionId = "neon-gel" | "gel-v6" | "rubber-base";
+
 export type ProductColor = {
   name: string;
   value: string;
@@ -26,6 +28,30 @@ export const CANNI_COLLECTIONS: Array<{
     image: `${import.meta.env.BASE_URL}images/canni/cc${number}.webp`,
   };
 });
+
+export const VENALISA_COLLECTIONS: Array<{
+  id: VenalisaCollectionId;
+  label: string;
+  image: string;
+}> = [
+  {
+    id: "neon-gel",
+    label: "Neon gel",
+    image: `${import.meta.env.BASE_URL}images/venalisa/neon-gel.jpeg`,
+  },
+  {
+    id: "gel-v6",
+    label: "Gel V6",
+    image: `${import.meta.env.BASE_URL}images/venalisa/gel-v6.jpeg`,
+  },
+  {
+    id: "rubber-base",
+    label: "Rubber base",
+    image: `${import.meta.env.BASE_URL}images/venalisa/rubber-base.jpeg`,
+  },
+];
+
+export const PRODUCT_COLLECTIONS = [...CANNI_COLLECTIONS, ...VENALISA_COLLECTIONS];
 
 const FRENCH_COLORS: Record<string, string> = {
   argent: "#c0c0c0",

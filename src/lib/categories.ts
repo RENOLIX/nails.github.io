@@ -7,7 +7,6 @@ import {
   Gem,
   Droplets,
   Sparkles,
-  Link2,
   Zap,
   Package,
 } from "lucide-react";
@@ -82,11 +81,7 @@ export const CATEGORIES: Category[] = [
     icon: Droplets,
     color: "#bbf7d0",
     image: categoryImage("gels"),
-    subcategories: [
-      { id: "canni", label: "Canni" },
-      { id: "venalisa", label: "Venalisa" },
-      { id: "frams", label: "Frams" },
-    ],
+    subcategories: [],
   },
   {
     id: "decoration",
@@ -94,17 +89,14 @@ export const CATEGORIES: Category[] = [
     icon: Sparkles,
     color: "#fde68a",
     image: categoryImage("decoration"),
-    subcategories: [
-      { id: "poudre", label: "Poudre" },
-      { id: "boite", label: "Boite" },
-    ],
+    subcategories: [],
   },
   {
-    id: "glue",
-    label: "Glue",
-    icon: Link2,
+    id: "pack",
+    label: "Pack",
+    icon: Package,
     color: "#e9d5ff",
-    image: categoryImage("glue"),
+    image: categoryImage("pack"),
     subcategories: [],
   },
   {

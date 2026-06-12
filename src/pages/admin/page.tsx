@@ -26,6 +26,7 @@ import { Textarea } from "@/components/ui/textarea.tsx";
 import { CATEGORIES } from "@/lib/categories.ts";
 import {
   CANNI_COLLECTIONS,
+  VENALISA_COLLECTIONS,
   resolveProductColor,
   type ProductColor,
 } from "@/lib/product-options.ts";
@@ -351,8 +352,12 @@ export default function AdminPage() {
       toast.error("Nom, catégorie et prix sont obligatoires.");
       return;
     }
-    if (productForm.category === "vernis" && productForm.subcategory === "canni" && !productForm.canni_collection) {
-      toast.error("Choisissez une collection Canni entre CC1 et CC8.");
+    if (
+      productForm.category === "vernis" &&
+      (productForm.subcategory === "canni" || productForm.subcategory === "venalisa") &&
+      !productForm.canni_collection
+    ) {
+      toast.error("Choisissez une collection.");
       return;
     }
     try {
@@ -367,7 +372,8 @@ export default function AdminPage() {
         images: productForm.images,
         stock: Math.max(0, Number(productForm.stock) || 0),
         canni_collection:
-          productForm.category === "vernis" && productForm.subcategory === "canni"
+          productForm.category === "vernis" &&
+          (productForm.subcategory === "canni" || productForm.subcategory === "venalisa")
             ? productForm.canni_collection
             : "",
         colors: productForm.colors,
@@ -811,16 +817,20 @@ export default function AdminPage() {
                       <Input value={productForm.subcategory} onChange={(event) => setProductForm({ ...productForm, subcategory: event.target.value })} placeholder="Sous-catégorie optionnelle" />
                     )}
                   </div>
-                  {productForm.category === "vernis" && productForm.subcategory === "canni" && (
+                  {productForm.category === "vernis" && (productForm.subcategory === "canni" || productForm.subcategory === "venalisa") && (
                     <div className="rounded-2xl border border-pink-100 bg-pink-50/60 p-4">
-                      <label className="mb-2 block text-xs font-black uppercase tracking-[0.16em] text-pink-600">Collection Canni</label>
+                      <label className="mb-2 block text-xs font-black uppercase tracking-[0.16em] text-pink-600">
+                        Collection {productForm.subcategory === "canni" ? "Canni" : "Venalisa"}
+                      </label>
                       <select
                         value={productForm.canni_collection}
                         onChange={(event) => setProductForm({ ...productForm, canni_collection: event.target.value })}
                         className="h-11 w-full rounded-xl border border-pink-200 bg-white px-3 text-sm font-bold"
                       >
-                        <option value="">Choisir CC1 à CC8</option>
-                        {CANNI_COLLECTIONS.map((collection) => (
+                        <option value="">
+                          {productForm.subcategory === "canni" ? "Choisir CC1 à CC8" : "Choisir une collection Venalisa"}
+                        </option>
+                        {(productForm.subcategory === "canni" ? CANNI_COLLECTIONS : VENALISA_COLLECTIONS).map((collection) => (
                           <option key={collection.id} value={collection.id}>{collection.label}</option>
                         ))}
                       </select>

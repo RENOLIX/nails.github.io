@@ -161,21 +161,32 @@ export type ProductInput = {
 };
 
 function adminProductToProduct(product: AdminProduct): Product {
+  const normalizedName = product.name.toLowerCase();
+  const inferredCollection =
+    product.canni_collection ??
+    (product.category === "vernis" && product.subcategory === "canni" && /^CC[1-8]$/i.test(product.reference ?? "")
+      ? product.reference?.toLowerCase()
+      : product.category === "vernis" && product.subcategory === "venalisa" && /neon\s*gel\s*nh[1-6]/i.test(product.name)
+        ? "neon-gel"
+        : product.category === "vernis" && product.subcategory === "venalisa" && /venalisa\s*(509[1-9]|510[0-8])/i.test(product.name)
+          ? "gel-v6"
+          : product.category === "vernis" && product.subcategory === "venalisa" && /rubber\s*base\s*(01|03)/i.test(normalizedName)
+            ? "rubber-base"
+            : undefined);
+
   return {
     id: product.id,
     name: product.name,
     reference: product.reference ?? undefined,
     description: product.description ?? "",
-    category: product.category,
+    category: product.category === "glue" ? "pack" : product.category,
     subcategory: product.subcategory ?? "",
     price: Number(product.price),
     oldPrice: product.old_price ? Number(product.old_price) : undefined,
     imageUrl: product.image_url ?? "",
     images: product.images?.length ? product.images : product.image_url ? [product.image_url] : [],
     stock: Number(product.stock ?? 20),
-    canniCollection:
-      product.canni_collection ??
-      (/^CC[1-8]$/i.test(product.reference ?? "") ? product.reference?.toLowerCase() : undefined),
+    canniCollection: inferredCollection,
     colors: Array.isArray(product.colors) ? product.colors : [],
     isBestSeller: product.is_best_seller,
     isNew: product.is_new,
